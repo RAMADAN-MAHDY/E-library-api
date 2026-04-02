@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:5000/api/v1
+@token = YOUR_TOKEN_HERE
+
+### Get Cart
+GET {{baseUrl}}/cart
+Authorization: Bearer {{token}}
+
+### Add Item to Cart
+# Replace :fileId with actual file ID
+POST {{baseUrl}}/cart/65f1234567890abcdef00000
+Authorization: Bearer {{token}}
+
+### Remove Item from Cart
+# Replace :fileId with actual file ID
+DELETE {{baseUrl}}/cart/65f1234567890abcdef00000
+Authorization: Bearer {{token}}
+
+### Clear Cart
+DELETE {{baseUrl}}/cart
+Authorization: Bearer {{token}}

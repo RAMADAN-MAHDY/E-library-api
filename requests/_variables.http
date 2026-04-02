@@ -1,0 +1,8 @@
+# ─── Shared Variables ────────────────────────────────────────────────────────
+# Copy this block to any .http file, or set once here and reference it.
+#
+# Base URL — change to your production URL when deploying
+@baseUrl = http://localhost:5000/api/v1
+
+# Paste your JWT token here after login
+@token = YOUR_JWT_TOKEN_HERE

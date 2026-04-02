@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:5000/api/v1
+@token = YOUR_TOKEN_HERE
+
+### List All Files (Public)
+GET {{baseUrl}}/files
+
+### Upload File (Multipart)
+# Note: REST Client supports multipart/form-data. 
+# Make sure to have a 'test.pdf' and 'cover.jpg' in the same folder or update paths.
+POST {{baseUrl}}/files/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="title"
+
+My Awesome Book
+--WebAppBoundary
+Content-Disposition: form-data; name="description"
+
+A very detailed description of the book.
+--WebAppBoundary
+Content-Disposition: form-data; name="price"
+
+1500
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="book.pdf"
+Content-Type: application/pdf
+
+< ./book.pdf
+--WebAppBoundary
+Content-Disposition: form-data; name="cover"; filename="cover.jpg"
+Content-Type: image/jpeg
+
+< ./cover.jpg
+--WebAppBoundary--
+
+### Get Download Link
+# Replace :id with actual file ID from MongoDB
+GET {{baseUrl}}/files/65f1234567890abcdef00000/download-link
+Authorization: Bearer {{token}}
+
+### Get Cover Image URL
+# Replace :id with actual file ID from MongoDB
+GET {{baseUrl}}/files/65f1234567890abcdef00000/cover-url
+Authorization: Bearer {{token}}
+
+### Delete File (Metadata + R2 Objects)
+# Replace :id with actual file ID
+DELETE {{baseUrl}}/files/65f1234567890abcdef00000
+Authorization: Bearer {{token}}
+
+### Update File Metadata (PATCH)
+# Replace :id with actual file ID
+PATCH {{baseUrl}}/files/65fb234567890abcdef00000
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "title": "My Updated Book Title (Metadata Only)",
+    "price": 2500
+}
+
+### Update File & Cover (Multipart PATCH)
+# Replace :id with actual file ID
+PATCH {{baseUrl}}/files/65fb234567890abcdef00000
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+New Title via Multipart
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cover"; filename="new_cover.jpg"
+Content-Type: image/jpeg
+
+< ./new_cover.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--

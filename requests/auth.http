@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:5000/api/v1
+
+### Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123"
+}
+
+### Login User
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "john@example.com",
+    "password": "password123"
+}
+
+### Register Admin
+POST {{baseUrl}}/auth/register-admin
+Content-Type: application/json
+
+{
+    "name": "Super Admin",
+    "email": "admin@gmail.com",
+    "password": "adminpassword123",
+    "adminSecret": "temporary_admin_secret_123"
+}
+
+### Access Token from Login Response
+@token = {{login.response.body.data.token}}

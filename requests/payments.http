@@ -1,0 +1,12 @@
+@baseUrl = http://localhost:5000/api/v1
+@token = YOUR_TOKEN_HERE
+
+### Create Payment Intent
+POST {{baseUrl}}/payments/create-intent
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "amount": 2500,
+    "currency": "usd"
+}
