@@ -17,6 +17,8 @@ const required = [
   'R2_BUCKET_NAME',
   'R2_ENDPOINT',
   'ADMIN_SECRET',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
 ];
 
 for (const key of required) {
@@ -44,6 +46,8 @@ export const env = {
   R2_ENDPOINT: (process.env.R2_ENDPOINT || '').trim(),
   R2_PUBLIC_URL: (process.env.R2_PUBLIC_URL || '').trim(),
   ADMIN_SECRET: (process.env.ADMIN_SECRET || '').trim(),
+  GOOGLE_CLIENT_ID: (process.env.GOOGLE_CLIENT_ID || '').trim(),
+  GOOGLE_CLIENT_SECRET: (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
 
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
 };

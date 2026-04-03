@@ -4,16 +4,27 @@ import { authLimiter } from '../middleware/rateLimiter.js';
 import validate from '../middleware/validate.js';
 import { registerSchema, loginSchema, registerAdminSchema } from '../validations/auth.validation.js';
 import * as authController from '../controllers/auth.controller.js';
+import passport from '../config/passport.js';
 
 const router = Router();
 
-// POST /api/v1/auth/register
+// --- Local Auth ---
 router.post('/register', authLimiter, validate(registerSchema), authController.register);
-
-// POST /api/v1/auth/login
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
-
-// POST /api/v1/auth/register-admin
 router.post('/register-admin', authLimiter, validate(registerAdminSchema), authController.registerAdmin);
+
+// --- Google OAuth ---
+// Trigger: GET /api/v1/auth/google
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+// Callback: GET /api/v1/auth/google/callback
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+  authController.googleCallback
+);
 
 export default router;

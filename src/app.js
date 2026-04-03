@@ -8,6 +8,8 @@ import router from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 
+import passport from 'passport';
+
 const app = express();
 
 // Trust the first proxy (e.g. ngrok, Cloudflare, Heroku)
@@ -16,7 +18,12 @@ app.set('trust proxy', 1);
 
 // ─── Security & Utility Middleware ───────────────────────────────────────────
 app.use(helmet());
-app.use(cors());
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5174'],
+  credentials: true,
+}));
+
 if (env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
@@ -28,11 +35,12 @@ app.use(express.json({
     if (req.originalUrl.includes('/webhook')) {
       req.rawBody = buf;
     }
-  }
+  } 
 }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Global Rate Limiter ─────────────────────────────────────────────────────
+app.use(passport.initialize());
 app.use(globalLimiter);
 
 // ─── Routes ──────────────────────────────────────────────────────────────────

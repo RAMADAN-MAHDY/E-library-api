@@ -35,3 +35,9 @@ export const registerAdmin = async (req, res, next) => {
     next(err);
   }
 };
+
+export const googleCallback = (req, res) => {
+  const token = authService.generateToken(req.user);
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  res.redirect(`${frontendUrl}/auth-success?token=${token}`);
+};
