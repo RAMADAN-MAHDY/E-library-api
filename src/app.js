@@ -10,6 +10,10 @@ import { globalLimiter } from './middleware/rateLimiter.js';
 
 const app = express();
 
+// Trust the first proxy (e.g. ngrok, Cloudflare, Heroku)
+// Essential for express-rate-limit to get the real client IP
+app.set('trust proxy', 1);
+
 // ─── Security & Utility Middleware ───────────────────────────────────────────
 app.use(helmet());
 app.use(cors());
@@ -18,7 +22,14 @@ if (env.NODE_ENV !== 'production') {
 }
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
-app.use(express.json());
+// We need the raw body for Stripe webhook signature verification
+app.use(express.json({
+  verify: (req, res, buf) => {
+    if (req.originalUrl.includes('/webhook')) {
+      req.rawBody = buf;
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Global Rate Limiter ─────────────────────────────────────────────────────

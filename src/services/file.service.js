@@ -71,13 +71,15 @@ export const uploadFile = async (fileObj, coverObj, meta, ownerId) => {
     originalName: fileObj.originalname,
     description: meta.description || '',
     price: meta.price ?? 0,
+    category: meta.category,
+    productType: meta.productType,
     r2Key,
     coverImageKey,
     mimeType: fileObj.mimetype,
     size: fileObj.size,
   });
 
-  return file;
+  return await file.populate(['category', 'productType']);
 };
 
 /**
@@ -122,12 +124,11 @@ export const updateFile = async (fileId, requesterId, updates, fileObj = null, c
   }
 
   // 3. Metadata
-  if (updates.title !== undefined) file.title = updates.title;
-  if (updates.description !== undefined) file.description = updates.description;
-  if (updates.price !== undefined) file.price = Number(updates.price);
+  if (updates.category !== undefined) file.category = updates.category;
+  if (updates.productType !== undefined) file.productType = updates.productType;
 
   await file.save();
-  return file;
+  return await file.populate(['category', 'productType']);
 };
 
 /**
@@ -152,23 +153,61 @@ export const getDownloadLink = async (fileId, requesterId) => {
 };
 
 /**
- * Generate a temporary pre-signed URL for a cover image.
+ * Returns the URL for a cover image. 
+ * If R2_PUBLIC_URL is set, it returns a permanent public link.
+ * Otherwise, it falls back to a long-lived signed URL (24 hours).
  */
 export const getCoverImageUrl = async (fileId) => {
   const file = await File.findById(fileId);
+  if (!file || !file.coverImageKey) {
+    return { url: null };
+  }
+
+  // If we have a public domain, use it for a permanent link
+  if (env.R2_PUBLIC_URL) {
+    const publicBase = env.R2_PUBLIC_URL.endsWith('/') ? env.R2_PUBLIC_URL : `${env.R2_PUBLIC_URL}/`;
+    return { url: `${publicBase}${file.coverImageKey}` };
+  }
+
+  // Fallback: 7-day signed URL (604,800 seconds)
+  const SECONDS_IN_WEEK = 7 * 24 * 60 * 60;
+  const url = await buildPresignedUrl(file.coverImageKey, null, SECONDS_IN_WEEK);
+  return { url, expiresIn: SECONDS_IN_WEEK };
+};
+
+/**
+ * Fetch a single file by ID (fully populated).
+ */
+export const getFileById = async (fileId) => {
+  const file = await File.findById(fileId).populate(['category', 'productType']);
   if (!file) {
     const err = new Error('File not found.');
     err.statusCode = 404;
     throw err;
   }
-  if (!file.coverImageKey) {
-    const err = new Error('This file has no cover image.');
-    err.statusCode = 404;
-    throw err;
+
+  // Resolve cover URL
+  let coverUrl = null;
+  if (file.coverImageKey) {
+    const result = await getCoverImageUrl(file._id);
+    coverUrl = result.url;
   }
 
-  const url = await buildPresignedUrl(file.coverImageKey, null, env.DOWNLOAD_LINK_EXPIRY_SECONDS);
-  return { url, expiresIn: env.DOWNLOAD_LINK_EXPIRY_SECONDS };
+  return {
+    id: file._id,
+    title: file.title,
+    description: file.description,
+    price: file.price,
+    discountPrice: file.discountPrice,
+    isOnSale: file.isOnSale,
+    coverUrl,
+    category: file.category,
+    productType: file.productType,
+    size: file.size,
+    mimeType: file.mimeType,
+    createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
+  };
 };
 
 /**
@@ -204,14 +243,24 @@ export const deleteFile = async (fileId, requesterId) => {
 };
 
 /**
- * List all files (with optional filters).
- * Also generates presigned cover URLs for all files.
+ * List all files (with pagination and optional filters).
  */
-export const getFiles = async (query = {}) => {
-  const files = await File.find(query).sort({ createdAt: -1 });
+export const getFiles = async (query = {}, page = 1, limit = 12) => {
+  const skip = (page - 1) * limit;
 
-  // Resolve cover URLs for all found files
-  return await Promise.all(
+  // 1. Get total results count for metadata
+  const totalResults = await File.countDocuments(query);
+  const totalPages = Math.ceil(totalResults / limit);
+
+  // 2. Fetch the paginated files
+  const files = await File.find(query)
+    .populate(['category', 'productType'])
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  // 3. Resolve cover URLs and build response objects
+  const resolvedFiles = await Promise.all(
     files.map(async (f) => {
       let coverUrl = null;
       if (f.coverImageKey) {
@@ -224,9 +273,25 @@ export const getFiles = async (query = {}) => {
         title: f.title,
         description: f.description,
         price: f.price,
+        discountPrice: f.discountPrice,
+        isOnSale: f.isOnSale,
         coverUrl,
+        category: f.category,
+        productType: f.productType,
         createdAt: f.createdAt,
       };
     })
   );
+
+  return {
+    files: resolvedFiles,
+    pagination: {
+      totalResults,
+      totalPages,
+      currentPage: page,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    }
+  };
 };

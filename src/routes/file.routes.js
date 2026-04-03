@@ -21,6 +21,7 @@ const router = Router();
  * List all available books in the store.
  */
 router.get('/', fileController.getFiles);
+router.get('/:id', fileController.getFileById);
 
 /**
  * GET /api/v1/files/:id/cover-url

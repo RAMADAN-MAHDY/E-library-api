@@ -1,6 +1,29 @@
-// src/services/cart.service.js
 import Cart from '../models/Cart.js';
 import File from '../models/File.js';
+import { getCoverImageUrl } from './file.service.js';
+
+/**
+ * Helper: Resolve real cover URLs for all items in a populated cart.
+ */
+const resolveCartData = async (cartDoc) => {
+  if (!cartDoc) return null;
+  
+  const cartObj = cartDoc.toJSON ? cartDoc.toJSON() : cartDoc;
+  
+  if (cartObj.items && cartObj.items.length > 0) {
+    cartObj.items = await Promise.all(
+      cartObj.items.map(async (item) => {
+        if (item.file && item.file.coverImageKey) {
+          const result = await getCoverImageUrl(item.file._id || item.file.id);
+          item.file.coverUrl = result.url;
+        }
+        return item;
+      })
+    );
+  }
+  
+  return cartObj;
+};
 
 /**
  * Get (or create) the user's cart, populated with file info.
@@ -10,7 +33,7 @@ export const getCart = async (userId) => {
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
-  return cart;
+  return await resolveCartData(cart);
 };
 
 /**
@@ -37,7 +60,8 @@ export const addItem = async (userId, fileId) => {
   }
 
   await cart.save();
-  return cart.populate('items.file', 'originalName description coverImageKey price');
+  const populated = await cart.populate('items.file', 'originalName description coverImageKey price');
+  return await resolveCartData(populated);
 };
 
 /**
@@ -53,7 +77,8 @@ export const removeItem = async (userId, fileId) => {
 
   cart.items = cart.items.filter((i) => i.file.toString() !== fileId);
   await cart.save();
-  return cart.populate('items.file', 'originalName description coverImageKey price');
+  const populated = await cart.populate('items.file', 'originalName description coverImageKey price');
+  return await resolveCartData(populated);
 };
 
 /**

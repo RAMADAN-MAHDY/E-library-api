@@ -8,6 +8,11 @@ const paymentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    book: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'File',
+      required: true,
+    },
     stripePaymentIntentId: {
       type: String,
       required: true,

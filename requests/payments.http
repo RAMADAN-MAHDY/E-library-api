@@ -1,5 +1,5 @@
-@baseUrl = http://localhost:5000/api/v1
-@token = YOUR_TOKEN_HERE
+@baseUrl = https://40f2-197-133-60-148.ngrok-free.app/api/v1
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2U3YjA4YWRhYzMxYzg2NDEwMmVmOSIsImVtYWlsIjoicmFtYWRhbjJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzUyMTcwNzcsImV4cCI6MTc3NTgyMTg3N30.-nzZsjMIwge6B4fCoYt-7bMY19eEkZuULYCxAq1kkjw
 
 ### Create Payment Intent
 POST {{baseUrl}}/payments/create-intent
@@ -7,6 +7,6 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "amount": 2500,
+    "bookId": "69ce9ffa169d40218fb16e24",
     "currency": "usd"
 }

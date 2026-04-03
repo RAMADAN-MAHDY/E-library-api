@@ -45,6 +45,24 @@ const fileSchema = new mongoose.Schema(
       type: Number,
       default: 0, // 0 = free
     },
+    discountPrice: {
+      type: Number,
+      default: null,
+    },
+    isOnSale: {
+      type: Boolean,
+      default: false,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
+    productType: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProductType',
+      required: true,
+    },
   },
   { timestamps: true }
 );

@@ -2,7 +2,12 @@
 import Joi from 'joi';
 
 export const createPaymentIntentSchema = Joi.object({
-  amount: Joi.number().integer().min(50).required()
-    .messages({ 'number.min': 'Amount must be at least 50 (cents).' }),
+  bookId: Joi.string().hex().length(24).required()
+    .messages({ 
+      'any.required': 'Book ID is required.',
+      'string.hex': 'Invalid Book ID format (must be hex).',
+      'string.length': 'Invalid Book ID length.'
+    }),
+  quantity: Joi.number().integer().min(1).default(1),
   currency: Joi.string().length(3).lowercase().default('usd'),
 });
