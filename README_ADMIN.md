@@ -96,6 +96,47 @@ const checkSales = async (token) => {
 
 ---
 
+## 📈 لوحة التحليلات المتقدمة (Full Admin Analytics)
+
+يوفر هذا الجزء تقارير شاملة واحترافية لمتابعة أداء المتجر ونمو المستخدمين.
+
+### 1. ملخص الـ Dashboard (KPIs)
+*   **المسار**: `GET /admin/dashboard`
+*   **الوصف**: يرجع الأرقام الحيوية فوراً (إجمالي الإيرادات، عدد المستخدمين، عدد الكتب، وأحدث 5 عمليات بيع).
+
+### 2. تحليلات المستخدمين (User Growth)
+*   **المسار**: `GET /admin/stats/users`
+*   **الوصف**: يحلل نمو المستخدمين (الإجمالي، المسجلين الجدد في آخر 30 يوم، عدد المشترين الفعليين، ونسبة التحويل Conversion Rate).
+
+### 3. تقارير الإيرادات (Revenue Breakdown)
+*   **المسار**: `GET /admin/revenue`
+*   **الوصف**: تفاصيل مالية (يومية لآخر شهر، وشهرية للسنة الحالية).
+
+### 4. المنتجات الأكثر مبيعاً (Top Sellers)
+*   **المسار**: `GET /admin/stats/books`
+*   **الوصف**: يرجع قائمة بأكثر 10 كتب تحقيقاً للمبيعات والإيرادات.
+
+### 5. تقارير ذكاء الأعمال المتقدمة (Advanced BI Insights)
+*   **المسار**: `GET /admin/stats/advanced`
+*   **الوصف**: يوفر بيانات استراتيجية للإدارة وتشمل:
+    *   `categoryPerformance`: أداء المبيعات حسب كل مجال (Revenue per Category).
+    *   `aov`: متوسط قيمة الطلب (Average Order Value).
+    *   `stagnantBooks`: الكتب "الراكدة" التي لم تبع أبداً وتم رفعها منذ أكثر من 30 يوم.
+    *   `signupChannels`: تحليل طرق تسجيل المستخدمين (Google vs Local).
+
+```javascript
+// مثال جلب التحليلات المتقدمة
+const loadAdvancedStats = async (token) => {
+  const { data } = await axios.get('/admin/stats/advanced', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log("أداء المجالات:", data.data.categoryPerformance);
+  console.log("متوسط الإنفاق:", data.data.aov.averageCents / 100);
+};
+```
+
+---
+
 ## 💡 نصائح هامة للادمن:
 1.  **الأسعار**: تأكد دائماً أنك ترسل الأسعار بالسنت. (السعر المخزن هو ما يدفعه المستخدم في النهاية بالسنت).
 2.  **الفئات**: قبل السماح للادمن بإضافة كتاب، قم دائماً بعمل `GET` للمجالات والأنواع لعرضها له في `Select Menu`.

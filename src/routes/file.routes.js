@@ -21,6 +21,9 @@ const router = Router();
  * List all available books in the store.
  */
 router.get('/', fileController.getFiles);
+router.get('/on-sale', fileController.getOnSaleFiles);
+router.get('/trending', fileController.getTrending);
+router.get('/popular', fileController.getPopular);
 router.get('/:id', fileController.getFileById);
 
 /**

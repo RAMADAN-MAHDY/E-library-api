@@ -5,6 +5,8 @@ import { randomUUID } from 'crypto';
 import r2Client from '../config/r2.js';
 import { env } from '../config/env.js';
 import File from '../models/File.js';
+import Payment from '../models/Payment.js';
+import User from '../models/User.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -294,4 +296,49 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
       hasPrevPage: page > 1,
     }
   };
+};
+
+/**
+ * Get most sold books (Trending)
+ */
+export const getTrendingFiles = async (limit = 10) => {
+  const trending = await Payment.aggregate([
+    { $match: { status: 'succeeded' } },
+    { $group: { _id: '$book', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: limit }
+  ]);
+
+  const fileIds = trending.map(t => t._id);
+  const files = await File.find({ _id: { $in: fileIds } }).populate(['category', 'productType']);
+  
+  // Maintain order
+  const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
+  
+  return await Promise.all(orderedFiles.map(async (f) => {
+    const result = await getCoverImageUrl(f._id);
+    return { ...f.toObject(), id: f._id, coverUrl: result.url };
+  }));
+};
+
+/**
+ * Get most favorited books (Popular)
+ */
+export const getPopularFiles = async (limit = 10) => {
+  const popular = await User.aggregate([
+    { $unwind: '$favorites' },
+    { $group: { _id: '$favorites', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: limit }
+  ]);
+
+  const fileIds = popular.map(p => p._id);
+  const files = await File.find({ _id: { $in: fileIds } }).populate(['category', 'productType']);
+  
+  const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
+
+  return await Promise.all(orderedFiles.map(async (f) => {
+    const result = await getCoverImageUrl(f._id);
+    return { ...f.toObject(), id: f._id, coverUrl: result.url };
+  }));
 };

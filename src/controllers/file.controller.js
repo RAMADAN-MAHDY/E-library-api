@@ -65,11 +65,12 @@ export const deleteFile = async (req, res, next) => {
 
 export const getFiles = async (req, res, next) => {
   try {
-    // Optional filter: owner
     const query = {};
     if (req.query.owner) query.owner = req.query.owner;
     if (req.query.category) query.category = req.query.category;
     if (req.query.productType) query.productType = req.query.productType;
+    if (req.query.isOnSale !== undefined) query.isOnSale = req.query.isOnSale === 'true';
+    
     if (req.query.q) {
       query.$or = [
         { title: { $regex: req.query.q, $options: 'i' } },
@@ -85,6 +86,43 @@ export const getFiles = async (req, res, next) => {
       data: result.files,
       pagination: result.pagination
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getOnSaleFiles = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const query = { isOnSale: true };
+
+    const result = await fileService.getFiles(query, page, limit);
+    res.status(200).json({ 
+      status: 'success', 
+      data: result.files,
+      pagination: result.pagination
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getTrending = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const files = await fileService.getTrendingFiles(limit);
+    res.status(200).json({ status: 'success', data: files });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getPopular = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const files = await fileService.getPopularFiles(limit);
+    res.status(200).json({ status: 'success', data: files });
   } catch (err) {
     next(err);
   }
