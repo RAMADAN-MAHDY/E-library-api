@@ -1,0 +1,36 @@
+### 🛒 E-Library Payment Testing (REST Client) ###
+
+@baseUrl = http://localhost:5000/api/v1
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2U3YzAzNWM1MGRhY2QxM2Y5YjE2MSIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc1MTM5ODQ0LCJleHAiOjE3NzU3NDQ2NDR9.MnSKPmGgC0tbryeWv3DyDrefiCv-aTq3fOlLmYWFApA
+@bookId = 69cfc8eaea8bd8c55f2dda69
+
+# 1. الدفع عبر Stripe (الوضع الافتراضي)
+POST {{baseUrl}}/payments/create-intent
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "bookId": "{{bookId}}",
+    "provider": "stripe",
+    "currency": "usd"
+}
+
+###
+
+# 2. الدفع عبر Paymob (مع رقم الهاتف)
+POST {{baseUrl}}/payments/create-intent
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "bookId": "{{bookId}}",
+    "provider": "paymob",
+    "currency": "EGP",
+    "phone": "01012345678"
+}
+
+###
+
+# 3. جلب كافة سجلات المبيعات (للأدمن)
+GET {{baseUrl}}/payments
+Authorization: Bearer {{token}}

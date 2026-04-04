@@ -43,6 +43,10 @@ const userSchema = new mongoose.Schema(
         ref: 'File',
       },
     ],
+    phone: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );

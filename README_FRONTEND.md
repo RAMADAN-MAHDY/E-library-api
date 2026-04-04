@@ -102,25 +102,49 @@ const fetchBooks = async () => {
 
 ## 💳 عملية الشراء (Payments)
 
-النظام يستخدم **Stripe**. قبل الشراء، يجب إنشاء "Payment Intent".
-*   **المسار**: `POST /payments/create-intent`
-*   **البيانات**: `{ bookId, quantity, currency }` (الكمية اختيارية، الافتراضي 1).
+النظام يدعم وسيلتي دفع: **Stripe** و **Paymob**. يمكنك الاختيار بينهما عند طلب السيرفر.
 
-**ملاحظة هامة:** السيرفر يتحقق تلقائياً من وجود خصم (`isOnSale`) ويستخدم السعر المخفض في الحساب لضمان الأمان.
+### 1. بدء عملية دفع
+*   **المسار**: `POST /payments/create-intent`
+*   **البيانات (Body)**: 
+    *   `bookId`: (مطلوب) ID الكتاب.
+    *   `provider`: (اختياري) إما `"stripe"` أو `"paymob"`. الافتراضي هو `stripe`.
+    *   `currency`: (اختياري) العملة (كود ISO مثل `"USD"` أو `"EGP"`).
+    *   `phone`: (**مطلوب لـ Paymob**) رقم هاتف العميل لإتمام العملية.
+    *   `quantity`: (اختياري) الكمية.
+
+### 2. التعامل مع النتيجة (Stripe)
+إذا اخترت `provider: "stripe"`، سيرجع لك السيرفر **clientSecret**.
+*   **المهمة**: استخدم الـ `clientSecret` مع مكتبة Stripe React/JS لإظهار نموذج الدفع (Elements) داخل موقعك.
+
+### 3. التعامل مع النتيجة (Paymob)
+إذا اخترت `provider: "paymob"`، سيرجع لك السيرفر **paymentLink**.
+*   **المهمة**: قم بتوجيه المستخدم (Redirect) لهذا الرابط ليقوم بالدفع في صفحة Paymob الخارجية.
 
 ```javascript
-const payPreview = async (bookId) => {
+// مثال طلب دفع عبر Paymob
+const startPayment = async (bookId) => {
   const { data } = await axios.post('/payments/create-intent', {
     bookId: bookId,
-    quantity: 1
+    provider: 'paymob',
+    currency: 'EGP',
+    phone: '01012345678' // يجب توفير رقم الهاتف لـ Paymob
   }, {
     headers: { Authorization: `Bearer ${token}` }
   });
   
-  // ارجع للفرونت إند بـ clientSecret لإتمام الدفع مع Stripe UI
-  return data.data.clientSecret;
+  if (data.data.provider === 'paymob') {
+    // توجيه العميل لصفحة Paymob الخارجية
+    window.location.assign(data.data.paymentLink);
+  } else {
+    // إتمام الدفع داخل الموقع عبر Stripe
+    const clientSecret = data.data.clientSecret;
+    // ... Stripe Logic ...
+  }
 };
 ```
+
+---
 
 ---
 

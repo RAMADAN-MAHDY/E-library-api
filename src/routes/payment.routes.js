@@ -8,8 +8,13 @@ import * as paymentController from '../controllers/payment.controller.js';
 const router = Router();
 
 // Stripe Webhook (No auth needed, verified via signature)
-// IMPORTANT: This route must receive the raw request body if you're using signature verification
 router.post('/webhook', paymentController.handleStripeWebhook);
+
+// Paymob Callback (No auth needed, verified via HMAC)
+router.get('/paymob-callback', paymentController.handlePaymobCallback);
+
+// Paymob Webhook (POST - Processed Callback)
+router.post('/paymob-webhook', paymentController.handlePaymobWebhook);
 
 // All other payment routes require authentication
 router.use(verifyToken);

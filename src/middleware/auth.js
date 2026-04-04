@@ -7,6 +7,16 @@ import { env } from '../config/env.js';
  * Attaches decoded payload to `req.user`.
  */
 const verifyToken = (req, res, next) => {
+  // ─── Skip auth for Public Hooks/Callbacks ───
+  // BROAD CHECK: If URL contains paymob or webhook, it's public.
+  const isPublic = req.originalUrl.toLowerCase().includes('paymob') || 
+                   req.originalUrl.toLowerCase().includes('webhook');
+  
+  if (isPublic) {
+    console.log(`🔓 [Auth Skip] Public access granted to: ${req.originalUrl}`);
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -3,10 +3,10 @@ import * as paymentService from '../services/payment.service.js';
 
 export const createIntent = async (req, res, next) => {
   try {
-    const { bookId, quantity, currency } = req.body;
-    const result = await paymentService.createPaymentIntent(bookId, quantity, currency, req.user.id);
+    const { bookId, quantity, currency, provider, phone } = req.body;
+    const result = await paymentService.createPayment(bookId, provider, quantity, currency, req.user.id, phone);
     res.status(201).json({ status: 'success', data: result });
-} catch (err) {
+  } catch (err) {
     next(err);
   }
 };
@@ -28,6 +28,63 @@ export const handleStripeWebhook = async (req, res, next) => {
     // Be careful with error status; Stripe relies on 200 to stop retrying.
     // If it's a signature mismatch, we can return 400.
     res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+};
+
+import { verifyPaymobHMAC } from '../services/paymob.service.js';
+
+export const handlePaymobCallback = async (req, res, next) => {
+  try {
+    const query = req.query; // Paymob sends data in query params for GET callbacks
+
+    // 1. Verify HMAC for security
+    const isValid = verifyPaymobHMAC(query);
+    if (!isValid) {
+      return res.status(400).json({ status: 'error', message: 'HMAC verification failed' });
+    }
+
+    // 2. Check if transaction was successful
+    const isSuccess = query.success === 'true';
+    const status = isSuccess ? 'succeeded' : 'failed';
+    const messageFromPaymob = query['data.message'] || ''; // e.g. "Invalid Card Number"
+
+    // 3. Update database using order ID (sent by Paymob as 'order')
+    await paymentService.updatePaymentStatus(query.order, status);
+
+    // 4. Redirect to frontend with clear result
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const finalUrl = `${frontendUrl}/payment-status?success=${isSuccess}&orderId=${query.order}&message=${encodeURIComponent(messageFromPaymob)}`;
+    
+    res.redirect(finalUrl);
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Paymob Processed Webhook (POST)
+ */
+export const handlePaymobWebhook = async (req, res, next) => {
+  try {
+    const { obj } = req.body; 
+
+    // 1. HMAC check
+    if (!verifyPaymobHMAC(obj)) {
+      return res.status(400).json({ status: 'error', message: 'HMAC verification failed' });
+    }
+
+    // 2. Status check
+    const status = (obj.success === true) ? 'succeeded' : 'failed';
+
+    // 3. Update the payment in DB
+    // Paymob sends order details in obj.order
+    await paymentService.updatePaymentStatus(obj.order.id, status);
+
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('⚠️ Paymob Webhook Error:', err.message);
+    res.status(200).json({ received: true }); // Always return 200 to stop Paymob retries
   }
 };
 

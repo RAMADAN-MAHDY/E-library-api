@@ -19,6 +19,10 @@ const required = [
   'ADMIN_SECRET',
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
+  'PAYMOB_API_KEY',
+  'PAYMOB_IFRAME_ID',
+  'PAYMOB_INTEGRATION_ID',
+  'PAYMOB_HMAC_SECRET',
 ];
 
 for (const key of required) {
@@ -48,6 +52,11 @@ export const env = {
   ADMIN_SECRET: (process.env.ADMIN_SECRET || '').trim(),
   GOOGLE_CLIENT_ID: (process.env.GOOGLE_CLIENT_ID || '').trim(),
   GOOGLE_CLIENT_SECRET: (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
+
+  PAYMOB_API_KEY: process.env.PAYMOB_API_KEY,
+  PAYMOB_IFRAME_ID: process.env.PAYMOB_IFRAME_ID,
+  PAYMOB_INTEGRATION_ID: process.env.PAYMOB_INTEGRATION_ID,
+  PAYMOB_HMAC_SECRET: process.env.PAYMOB_HMAC_SECRET,
 
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
 };

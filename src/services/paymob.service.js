@@ -1,0 +1,146 @@
+// src/services/paymob.service.js
+import axios from 'axios';
+import crypto from 'crypto';
+import { env } from '../config/env.js';
+
+const PAYMOB_BASE_URL = 'https://accept.paymob.com/api';
+
+/**
+ * Security: Verify Paymob HMAC Signature
+ */
+export const verifyPaymobHMAC = (query) => {
+  const hmacProps = [
+    'amount_cents',
+    'created_at',
+    'currency',
+    'error_occured',
+    'has_parent_transaction',
+    'id',
+    'integration_id',
+    'is_3d_secure',
+    'is_auth',
+    'is_capture',
+    'is_refunded',
+    'is_standalone_payment',
+    'is_voided',
+    'order.id',
+    'owner',
+    'pending',
+    'source_data.pan',
+    'source_data.sub_type',
+    'source_data.type',
+    'success',
+  ];
+
+  // Build the message to hash following Paymob's alphabetical order requirement
+  const message = hmacProps
+    .map((key) => {
+      // Helper to traverse deep objects like source_data.pan or use fallback for 'order.id' vs 'order'
+      let value = key.split('.').reduce((o, i) => (o ? o[i] : ''), query);
+      
+      // Paymob Fallback: if 'order.id' is missing (as in GET callbacks), use 'order'
+      if (key === 'order.id' && (value === '' || value === undefined)) {
+        value = query.order;
+      }
+      
+      return value;
+    })
+    .join('');
+
+  const secret = env.PAYMOB_HMAC_SECRET;
+  const hash = crypto.createHmac('sha512', secret).update(message).digest('hex');
+
+  return hash === query.hmac;
+};
+
+/**
+ * Step 1: Authentication
+ * @returns {Promise<string>} auth_token
+ */
+const authenticate = async () => {
+  const response = await axios.post(`${PAYMOB_BASE_URL}/auth/tokens`, {
+    api_key: env.PAYMOB_API_KEY,
+  });
+  return response.data.token;
+};
+
+/**
+ * Step 2: Order Registration
+ * @param {string} token auth_token
+ * @param {number} amount_cents 
+ * @param {string} currency 
+ * @returns {Promise<number>} order_id
+ */
+const registerOrder = async (token, amount_cents, currency) => {
+  const response = await axios.post(`${PAYMOB_BASE_URL}/ecommerce/orders`, {
+    auth_token: token,
+    delivery_needed: 'false',
+    amount_cents: String(amount_cents),
+    currency,
+    items: [],
+  });
+  return response.data.id;
+};
+
+/**
+ * Step 3: Payment Key Request
+ * @param {string} token auth_token
+ * @param {number} order_id 
+ * @param {number} amount_cents 
+ * @param {string} currency 
+ * @param {object} userData { name, email, phone }
+ */
+const getPaymentKey = async (token, order_id, amount_cents, currency, userData) => {
+  const [firstName, ...lastNameParts] = userData.name.split(' ');
+  const lastName = lastNameParts.join(' ') || 'User';
+
+  const response = await axios.post(`${PAYMOB_BASE_URL}/acceptance/payment_keys`, {
+    auth_token: token,
+    amount_cents: String(amount_cents),
+    expiration: 3600, // 1 hour
+    order_id: String(order_id),
+    billing_data: {
+      apartment: 'NA',
+      email: userData.email,
+      floor: 'NA',
+      first_name: firstName,
+      street: 'NA',
+      building: 'NA',
+      phone_number: userData.phone || '00000000000',
+      shipping_method: 'NA',
+      postal_code: 'NA',
+      city: 'NA',
+      country: 'NA',
+      last_name: lastName,
+      state: 'NA',
+    },
+    currency,
+    integration_id: Number(env.PAYMOB_INTEGRATION_ID),
+  });
+  return response.data.token;
+};
+
+/**
+ * Full Flow to get Payment Link
+ */
+export const createPaymentLink = async (amount_cents, currency, userData) => {
+  try {
+    const auth_token = await authenticate();
+    const order_id = await registerOrder(auth_token, amount_cents, currency);
+    const payment_key = await getPaymentKey(auth_token, order_id, amount_cents, currency, userData);
+
+    return {
+      link: `https://accept.paymob.com/api/acceptance/iframes/${env.PAYMOB_IFRAME_ID}?payment_token=${payment_key}`,
+      orderId: order_id
+    };
+  } catch (err) {
+    // Detailed error capture
+    const errorBody = err.response?.data;
+    const detail = typeof errorBody === 'object' 
+      ? (errorBody.message || errorBody.detail || JSON.stringify(errorBody))
+      : String(errorBody || err.message);
+
+    console.error('🚨 Paymob Final Diagnostic:', errorBody || err.message);
+    throw new Error(`Paymob Error: ${detail}`);
+  }
+};

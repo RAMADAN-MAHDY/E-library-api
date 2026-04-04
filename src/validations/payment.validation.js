@@ -10,4 +10,12 @@ export const createPaymentIntentSchema = Joi.object({
     }),
   quantity: Joi.number().integer().min(1).default(1),
   currency: Joi.string().length(3).lowercase().default('usd'),
+  provider: Joi.string().valid('stripe', 'paymob').default('stripe').lowercase(),
+  phone: Joi.string().when('provider', {
+    is: 'paymob',
+    then: Joi.required(),
+    otherwise: Joi.optional()
+  }).messages({
+    'any.required': 'Phone number is required for Paymob payments.'
+  }),
 });

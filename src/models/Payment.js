@@ -13,10 +13,15 @@ const paymentSchema = new mongoose.Schema(
       ref: 'File',
       required: true,
     },
-    stripePaymentIntentId: {
+    transactionId: {
       type: String,
       required: true,
       unique: true,
+    },
+    provider: {
+      type: String,
+      enum: ['stripe', 'paymob'],
+      default: 'stripe',
     },
     amount: {
       type: Number, // in smallest currency unit (e.g. cents)
@@ -29,12 +34,22 @@ const paymentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['requires_payment_method', 'requires_confirmation', 'succeeded', 'canceled'],
-      default: 'requires_payment_method',
+      // Using generic statuses that map to both
+      enum: ['pending', 'succeeded', 'failed', 'canceled', 'requires_payment_method'],
+      default: 'pending',
     },
   },
   { timestamps: true }
 );
 
 const Payment = mongoose.model('Payment', paymentSchema);
+
+/**
+ * DB MIGRATION: Drop old index that causes duplicate key error
+ * This is safe to leave here until first successful start.
+ */
+Payment.collection.dropIndex('stripePaymentIntentId_1').catch(() => {
+  // Silence error if index already dropped or missing
+});
+
 export default Payment;
