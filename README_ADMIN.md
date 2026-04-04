@@ -5,8 +5,7 @@
 ---
 
 ## ⚙️ معلومات عامة
-*   **Base URL**: `https://40f2-197-133-60-148.ngrok-free.app/api/v1`
-*   **Authentication**: لابد من تسجيل الدخول والموافقة من السيرفر كمسؤول.
+*   **Base URL**: `https://e-library-api-production.up.railway.app/api/v1`
 
 ---
 
