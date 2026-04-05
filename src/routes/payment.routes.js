@@ -19,6 +19,12 @@ router.post('/paymob-webhook', paymentController.handlePaymobWebhook);
 // All other payment routes require authentication
 router.use(verifyToken);
 
+// GET /api/v1/payments/my-purchases
+router.get('/my-purchases', paymentController.getMyPurchases);
+
+// GET /api/v1/payments/:id
+router.get('/:id', paymentController.findOneByTransaction);
+
 // GET /api/v1/payments (Admin Only)
 router.get('/', isAdmin, paymentController.getAll);
 

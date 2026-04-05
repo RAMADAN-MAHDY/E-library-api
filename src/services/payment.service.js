@@ -12,8 +12,8 @@ const initiateStripe = async (book, totalAmount, quantity, currency, userId) => 
   const intent = await stripe.paymentIntents.create({
     amount: totalAmount,
     currency,
-    metadata: { 
-      userId: userId.toString(), 
+    metadata: {
+      userId: userId.toString(),
       bookId: book._id.toString(),
       quantity: quantity.toString()
     },
@@ -35,7 +35,7 @@ const initiateStripe = async (book, totalAmount, quantity, currency, userId) => 
     clientSecret: intent.client_secret,
     transactionId: intent.id,
     totalPrice: totalAmount,
-    bookTitle: book.title, 
+    bookTitle: book.title,
   };
 };
 
@@ -44,7 +44,7 @@ const initiateStripe = async (book, totalAmount, quantity, currency, userId) => 
  */
 const initiatePaymob = async (book, totalAmount, quantity, currency, userId, phone) => {
   const user = await User.findById(userId);
-  
+
   // Paymob creates an "Order" and a "Payment Key"
   const { link, orderId } = await paymobHandler(totalAmount, currency.toUpperCase(), {
     name: user.name,
@@ -62,7 +62,7 @@ const initiatePaymob = async (book, totalAmount, quantity, currency, userId, pho
     currency,
     status: 'pending',
   });
-  
+
   return {
     provider: 'paymob',
     paymentLink: link,
@@ -128,6 +128,15 @@ export const updatePaymentStatus = async (transactionId, status) => {
   if (!payment) {
     console.warn(`⚠️  Payment record for transaction ${transactionId} not found.`);
   }
+
+  return payment;
+};
+
+export const getPaymentByTransactionId = async (transactionId, userId) => {
+  const payment = await Payment.findOne({
+    transactionId: transactionId.toString(),
+    user: userId
+  }).populate('book', 'title price');
 
   return payment;
 };

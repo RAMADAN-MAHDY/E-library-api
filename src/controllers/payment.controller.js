@@ -21,7 +21,7 @@ export const handleStripeWebhook = async (req, res, next) => {
     const payload = req.rawBody; // Captured as a Buffer in app.js
 
     const result = await paymentService.processWebhook(payload, signature);
-    
+
     // Stripe expects a 200 response to acknowledge receipt
     res.status(200).json({ received: true });
   } catch (err) {
@@ -55,7 +55,7 @@ export const handlePaymobCallback = async (req, res, next) => {
     // 4. Redirect to frontend with clear result
     const frontendUrl = env.FRONTEND_URL;
     const finalUrl = `${frontendUrl}/payment-status?success=${isSuccess}&orderId=${query.order}&message=${encodeURIComponent(messageFromPaymob)}`;
-    
+
     res.redirect(finalUrl);
 
   } catch (err) {
@@ -68,7 +68,7 @@ export const handlePaymobCallback = async (req, res, next) => {
  */
 export const handlePaymobWebhook = async (req, res, next) => {
   try {
-    const { obj } = req.body; 
+    const { obj } = req.body;
 
     // 1. HMAC check
     if (!verifyPaymobHMAC(obj)) {
@@ -86,6 +86,28 @@ export const handlePaymobWebhook = async (req, res, next) => {
   } catch (err) {
     console.error('⚠️ Paymob Webhook Error:', err.message);
     res.status(200).json({ received: true }); // Always return 200 to stop Paymob retries
+  }
+};
+
+export const findOneByTransaction = async (req, res, next) => {
+  try {
+    const payment = await paymentService.getPaymentByTransactionId(req.params.id, req.user.id);
+    if (!payment) {
+      return res.status(404).json({ status: 'error', message: 'Payment record not found.' });
+    }
+    res.status(200).json({ status: 'success', data: payment });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getMyPurchases = async (req, res, next) => {
+  try {
+    const query = { user: req.user.id, status: 'succeeded' };
+    const payments = await paymentService.getPayments(query);
+    res.status(200).json({ status: 'success', data: payments });
+  } catch (err) {
+    next(err);
   }
 };
 

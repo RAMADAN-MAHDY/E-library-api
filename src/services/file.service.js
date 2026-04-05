@@ -144,8 +144,15 @@ export const getDownloadLink = async (fileId, requesterId) => {
     throw err;
   }
 
-  if (file.owner.toString() !== requesterId) {
-    const err = new Error('Forbidden: you do not own this file.');
+  // Check if user is the owner OR has a successful payment for this file
+  const hasPaid = await Payment.findOne({
+    user: requesterId,
+    book: fileId,
+    status: 'succeeded'
+  });
+
+  if (file.owner.toString() !== requesterId && !hasPaid) {
+    const err = new Error('Forbidden: you do not have access to download this file. Please purchase it first.');
     err.statusCode = 403;
     throw err;
   }
