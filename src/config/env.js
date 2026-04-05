@@ -59,4 +59,5 @@ export const env = {
   PAYMOB_HMAC_SECRET: (process.env.PAYMOB_HMAC_SECRET || '').trim(),
 
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
+  FRONTEND_URL: (process.env.FRONTEND_URL || 'http://localhost:3000').trim(),
 };

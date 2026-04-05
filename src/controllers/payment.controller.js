@@ -1,5 +1,6 @@
 // src/controllers/payment.controller.js
 import * as paymentService from '../services/payment.service.js';
+import { env } from '../config/env.js';
 
 export const createIntent = async (req, res, next) => {
   try {
@@ -52,7 +53,7 @@ export const handlePaymobCallback = async (req, res, next) => {
     await paymentService.updatePaymentStatus(query.order, status);
 
     // 4. Redirect to frontend with clear result
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = env.FRONTEND_URL;
     const finalUrl = `${frontendUrl}/payment-status?success=${isSuccess}&orderId=${query.order}&message=${encodeURIComponent(messageFromPaymob)}`;
     
     res.redirect(finalUrl);
