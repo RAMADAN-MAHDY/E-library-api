@@ -32,18 +32,22 @@ export const verifyPaymobHMAC = (query) => {
     'success',
   ];
 
-  // Build the message to hash following Paymob's alphabetical order requirement
   const message = hmacProps
     .map((key) => {
-      // Helper to traverse deep objects like source_data.pan or use fallback for 'order.id' vs 'order'
-      let value = key.split('.').reduce((o, i) => (o ? o[i] : ''), query);
+      // 1. البحث عن المفتاح مباشرة (مهم لروابط الـ GET Callback)
+      if (query[key] !== undefined) {
+        return String(query[key]);
+      }
+
+      // 2. البحث المتداخل (مهم للـ POST Webhooks)
+      let value = key.split('.').reduce((o, i) => (o ? o[i] : undefined), query);
       
-      // Paymob Fallback: if 'order.id' is missing (as in GET callbacks), use 'order'
+      // 3. حالة خاصة لحقل order.id في روابط الـ GET يسمى order فقط
       if (key === 'order.id' && (value === '' || value === undefined)) {
         value = query.order;
       }
       
-      return value;
+      return (value !== undefined && value !== null) ? String(value) : '';
     })
     .join('');
 
@@ -52,6 +56,7 @@ export const verifyPaymobHMAC = (query) => {
 
   return hash === query.hmac;
 };
+
 
 /**
  * Step 1: Authentication

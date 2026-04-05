@@ -53,10 +53,10 @@ export const env = {
   GOOGLE_CLIENT_ID: (process.env.GOOGLE_CLIENT_ID || '').trim(),
   GOOGLE_CLIENT_SECRET: (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
 
-  PAYMOB_API_KEY: process.env.PAYMOB_API_KEY,
-  PAYMOB_IFRAME_ID: process.env.PAYMOB_IFRAME_ID,
-  PAYMOB_INTEGRATION_ID: process.env.PAYMOB_INTEGRATION_ID,
-  PAYMOB_HMAC_SECRET: process.env.PAYMOB_HMAC_SECRET,
+  PAYMOB_API_KEY: (process.env.PAYMOB_API_KEY || '').trim(),
+  PAYMOB_IFRAME_ID: (process.env.PAYMOB_IFRAME_ID || '').trim(),
+  PAYMOB_INTEGRATION_ID: (process.env.PAYMOB_INTEGRATION_ID || '').trim(),
+  PAYMOB_HMAC_SECRET: (process.env.PAYMOB_HMAC_SECRET || '').trim(),
 
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
 };
