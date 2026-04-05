@@ -25,6 +25,9 @@ router.get('/my-purchases', paymentController.getMyPurchases);
 // GET /api/v1/payments/:id
 router.get('/:id', paymentController.findOneByTransaction);
 
+// GET /api/v1/payments/stats (Admin Only)
+router.get('/stats', isAdmin, paymentController.getStats);
+
 // GET /api/v1/payments (Admin Only)
 router.get('/', isAdmin, paymentController.getAll);
 

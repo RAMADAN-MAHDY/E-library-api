@@ -100,6 +100,7 @@ export const processWebhook = async (payload, signature) => {
     throw new Error(`Webhook signature verification failed: ${err.message}`);
   }
 
+  // 1. Payment Success/Failure
   if (event.type === 'payment_intent.succeeded') {
     await Payment.findOneAndUpdate(
       { transactionId: event.data.object.id },
@@ -109,6 +110,32 @@ export const processWebhook = async (payload, signature) => {
     await Payment.findOneAndUpdate(
       { transactionId: event.data.object.id },
       { status: 'failed' }
+    );
+  } 
+  
+  // 2. Refunds
+  else if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    await Payment.findOneAndUpdate(
+      { transactionId: charge.payment_intent },
+      { status: 'refunded' }
+    );
+  }
+
+  // 3. Disputes (Complaints through Bank)
+  else if (event.type === 'charge.dispute.created') {
+    const dispute = event.data.object;
+    await Payment.findOneAndUpdate(
+      { transactionId: dispute.payment_intent },
+      { status: 'disputed' }
+    );
+  }
+  else if (event.type === 'charge.dispute.closed') {
+    const dispute = event.data.object;
+    const status = dispute.status === 'won' ? 'succeeded' : 'refunded';
+    await Payment.findOneAndUpdate(
+      { transactionId: dispute.payment_intent },
+      { status }
     );
   }
 
@@ -139,6 +166,34 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
   }).populate('book', 'title price');
 
   return payment;
+};
+
+export const getStats = async () => {
+  const stats = await Payment.aggregate([
+    {
+      $group: {
+        _id: '$status',
+        totalAmount: { $sum: '$amount' },
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  // Transform into a readable object
+  const result = {
+    succeeded: { amount: 0, count: 0 },
+    refunded: { amount: 0, count: 0 },
+    disputed: { amount: 0, count: 0 },
+    failed: { amount: 0, count: 0 }
+  };
+
+  stats.forEach(s => {
+    if (result[s._id]) {
+      result[s._id] = { amount: s.totalAmount, count: s.count };
+    }
+  });
+
+  return result;
 };
 
 export const getPayments = async (query = {}) => {

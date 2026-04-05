@@ -79,17 +79,30 @@ fd.append('cover', coverImage);
 ## 💳 متابعة المدفوعات (Order Tracking)
 
 يمكن للادمن متابعة الحالات القادمة من Stripe لمراقبة المبيعات.
-*   **المسار**: `GET /payments` (Admin Only)
-*   **الفلترة**: `GET /payments?status=succeeded`
-*   **البيانات الراجعة**: تحتوي على بيانات المستخدم الذي اشترى، والكتاب، وحالة العملية في Stripe.
+*   **الفلترة (Query Params)**: 
+    *   `status`: (مثل `disputed`, `refunded`, `succeeded`, `failed`) لمراقبة حالات معينة.
+    *   `provider`: (مثل `stripe`, `paymob`) لمقارنة أداء بوابات الدفع.
+*   **البيانات الراجعة**: تحتوي على بيانات المستخدم الذي اشترى، والكتاب، وحالة العملية في Stripe/Paymob.
+
+### 2. ملخص الإحصائيات المالية (Financial Stats)
+هذا المسار يعطيك الأرقام النهائية للأرباح والخسائر والنزاعات دون الحاجة لجلب كل العمليات.
+*   **المسار**: `GET /payments/stats` (Admin Only)
+*   **النتيجة**: كائن يحتوي على (اجمالي الأرباح، اجمالي المستردات، واجمالي المبالغ المجمدة بسبب نزاعات بنكية).
 
 ```javascript
 const checkSales = async (token) => {
-  const { data } = await axios.get('/payments', {
+  // 1. جلب قائمة النزاعات فقط (Disputes)
+  const disputes = await axios.get('/api/v1/payments?status=disputed', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  // قائمة المدفوعات مع تفاصيل العميل والكتاب
-  console.log(data.data); 
+  
+  // 2. جلب ملخص الإحصائيات المالية
+  const stats = await axios.get('/api/v1/payments/stats', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  
+  console.log("إجمالي الأرباح السليمة:", stats.data.data.succeeded.amount / 100);
+  console.log("إجمالي المبالغ في نزاعات:", stats.data.data.disputed.amount / 100);
 };
 ```
 
