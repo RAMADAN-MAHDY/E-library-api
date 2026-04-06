@@ -14,6 +14,9 @@ const categorySchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    coverImageKey: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

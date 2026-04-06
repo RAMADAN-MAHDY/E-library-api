@@ -3,7 +3,8 @@ import * as categoryService from '../services/category.service.js';
 
 export const create = async (req, res, next) => {
   try {
-    const category = await categoryService.createCategory(req.body);
+    const coverFile = req.file || null;
+    const category = await categoryService.createCategory(req.body, coverFile);
     res.status(201).json({ status: 'success', data: category });
   } catch (err) {
     next(err);
@@ -21,7 +22,8 @@ export const getAll = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const category = await categoryService.updateCategory(req.params.id, req.body);
+    const coverFile = req.file || null;
+    const category = await categoryService.updateCategory(req.params.id, req.body, coverFile);
     if (!category) {
       return res.status(404).json({ status: 'error', message: 'Category not found' });
     }
