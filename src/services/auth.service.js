@@ -48,7 +48,7 @@ export const login = async (email, password) => {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-export const generateToken = (user) =>
+const signToken = (user) =>
   jwt.sign(
     { id: user._id, email: user.email, role: user.role },
     env.JWT_SECRET,
