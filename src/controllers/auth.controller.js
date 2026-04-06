@@ -1,5 +1,6 @@
 // src/controllers/auth.controller.js
 import * as authService from '../services/auth.service.js';
+import User from '../models/User.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -40,4 +41,18 @@ export const googleCallback = (req, res) => {
   const token = authService.generateToken(req.user);
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   res.redirect(`${frontendUrl}/auth-success?token=${token}`);
+};
+
+export const getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      const err = new Error('User not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+    res.status(200).json({ status: 'success', data: authService.sanitizeUser(user) });
+  } catch (err) {
+    next(err);
+  }
 };

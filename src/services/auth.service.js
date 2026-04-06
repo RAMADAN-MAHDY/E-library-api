@@ -48,14 +48,14 @@ export const login = async (email, password) => {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const signToken = (user) =>
+export const generateToken = (user) =>
   jwt.sign(
     { id: user._id, email: user.email, role: user.role },
     env.JWT_SECRET,
     { expiresIn: env.JWT_EXPIRES_IN }
   );
 
-const sanitizeUser = (user) => ({
+export const sanitizeUser = (user) => ({
   id: user._id,
   name: user.name,
   email: user.email,

@@ -5,6 +5,7 @@ import validate from '../middleware/validate.js';
 import { registerSchema, loginSchema, registerAdminSchema } from '../validations/auth.validation.js';
 import * as authController from '../controllers/auth.controller.js';
 import passport from '../config/passport.js';
+import verifyToken from '../middleware/auth.js';
 
 const router = Router();
 
@@ -26,5 +27,8 @@ router.get(
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   authController.googleCallback
 );
+
+// --- Authenticated User ---
+router.get('/me', verifyToken, authController.getMe);
 
 export default router;
