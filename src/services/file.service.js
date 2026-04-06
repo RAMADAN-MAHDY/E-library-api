@@ -73,6 +73,8 @@ export const uploadFile = async (fileObj, coverObj, meta, ownerId) => {
     originalName: fileObj.originalname,
     description: meta.description || '',
     price: meta.price ?? 0,
+    discountPrice: meta.discountPrice,
+    isOnSale: meta.isOnSale,
     category: meta.category,
     productType: meta.productType,
     r2Key,
@@ -126,6 +128,11 @@ export const updateFile = async (fileId, requesterId, updates, fileObj = null, c
   }
 
   // 3. Metadata
+  if (updates.title !== undefined) file.title = updates.title;
+  if (updates.description !== undefined) file.description = updates.description;
+  if (updates.price !== undefined) file.price = Number(updates.price);
+  if (updates.discountPrice !== undefined) file.discountPrice = updates.discountPrice ? Number(updates.discountPrice) : null;
+  if (updates.isOnSale !== undefined) file.isOnSale = updates.isOnSale === 'true' || updates.isOnSale === true;
   if (updates.category !== undefined) file.category = updates.category;
   if (updates.productType !== undefined) file.productType = updates.productType;
 
