@@ -51,7 +51,8 @@ const removeFromR2 = async (key) => {
  * @param {{ description?: string, price?: number }} meta       - extra metadata
  * @param {string} ownerId
  */
-export const uploadFile = async (fileObj, coverObj, meta, ownerId) => {
+export const uploadFile = async (fileObj, coverObj, meta, user) => {
+  const ownerId = user.id || user._id;
   console.log(`📡 [R2 DEBUG] Using bucket: [${env.R2_BUCKET_NAME}]`);
   
   // ── Main file ──
@@ -90,8 +91,9 @@ export const uploadFile = async (fileObj, coverObj, meta, ownerId) => {
  * Update file metadata and/or actual files.
  * If a new main file or cover is provided, we upload new and delete old from R2.
  */
-export const updateFile = async (fileId, requesterId, updates, fileObj = null, coverObj = null) => {
+export const updateFile = async (fileId, user, updates, fileObj = null, coverObj = null) => {
   const file = await File.findById(fileId);
+  const requesterId = user.id || user._id;
 
   if (!file) {
     const err = new Error('File not found.');
@@ -100,7 +102,7 @@ export const updateFile = async (fileId, requesterId, updates, fileObj = null, c
   }
 
   // Ownership Check
-  if (file.owner.toString() !== requesterId) {
+  if (file.owner.toString() !== requesterId && user.role !== 'admin') {
     const err = new Error('Forbidden: you do not own this file.');
     err.statusCode = 403;
     throw err;
@@ -143,7 +145,8 @@ export const updateFile = async (fileId, requesterId, updates, fileObj = null, c
 /**
  * Generate a temporary pre-signed download URL for a file.
  */
-export const getDownloadLink = async (fileId, requesterId) => {
+export const getDownloadLink = async (fileId, user) => {
+  const requesterId = user.id || user._id;
   const file = await File.findById(fileId);
   if (!file) {
     const err = new Error('File not found.');
@@ -158,7 +161,7 @@ export const getDownloadLink = async (fileId, requesterId) => {
     status: 'succeeded'
   });
 
-  if (file.owner.toString() !== requesterId && !hasPaid) {
+  if (file.owner.toString() !== requesterId && user.role !== 'admin' && !hasPaid) {
     const err = new Error('Forbidden: you do not have access to download this file. Please purchase it first.');
     err.statusCode = 403;
     throw err;
@@ -232,7 +235,8 @@ export const getFileById = async (fileId) => {
  * @param {string} fileId
  * @param {string} requesterId
  */
-export const deleteFile = async (fileId, requesterId) => {
+export const deleteFile = async (fileId, user) => {
+  const requesterId = user.id || user._id;
   const file = await File.findById(fileId);
 
   if (!file) {
@@ -242,7 +246,7 @@ export const deleteFile = async (fileId, requesterId) => {
   }
 
   // Ownership check
-  if (file.owner.toString() !== requesterId) {
+  if (file.owner.toString() !== requesterId && user.role !== 'admin') {
     const err = new Error('Forbidden: you do not own this file.');
     err.statusCode = 403;
     throw err;
