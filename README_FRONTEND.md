@@ -88,8 +88,36 @@ const fetchBooks = async () => {
 ## 🛒 سلة المشتريات (Cart)
 
 *   **عرض السلة**: `GET /cart`
-*   **إضافة عنصر**: `POST /cart/add` -> البيانات: `{ fileId }`
-*   **حذف عنصر**: `DELETE /cart/remove/:fileId`
+*   **إضافة عنصر**: `POST /cart/:fileId` (ملاحظة: مسار الرابط يحتوي على ID الكتاب)
+*   **حذف عنصر**: `DELETE /cart/:fileId`
+*   **تفريغ السلة**: `DELETE /cart`
+
+### شكل الاستجابة (Response):
+البيانات الراجعة للسلة ستحتوي على قائمة بالكتب, مع تفاصيل الكتاب بما في ذلك `title` ورابط الغلاف:
+```javascript
+{
+  "status": "success",
+  "data": {
+    "_id": "64e...",
+    "user": "64e...",
+    "items": [
+      {
+        "file": {
+          "_id": "65f...",
+          "title": "عنوان الكتاب",
+          "description": "وصف قصير",
+          "price": 100,
+          "coverUrl": "https://...",
+          "originalName": "file.pdf"
+        },
+        "quantity": 1,
+        "priceAtAdd": 100
+      }
+    ],
+    "total": 100
+  }
+}
+```
 
 ---
 

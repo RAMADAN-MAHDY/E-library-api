@@ -29,7 +29,7 @@ const resolveCartData = async (cartDoc) => {
  * Get (or create) the user's cart, populated with file info.
  */
 export const getCart = async (userId) => {
-  let cart = await Cart.findOne({ user: userId }).populate('items.file', 'originalName description coverImageKey price');
+  let cart = await Cart.findOne({ user: userId }).populate('items.file', 'title originalName description coverImageKey price');
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
@@ -60,7 +60,7 @@ export const addItem = async (userId, fileId) => {
   }
 
   await cart.save();
-  const populated = await cart.populate('items.file', 'originalName description coverImageKey price');
+  const populated = await cart.populate('items.file', 'title originalName description coverImageKey price');
   return await resolveCartData(populated);
 };
 
@@ -77,7 +77,7 @@ export const removeItem = async (userId, fileId) => {
 
   cart.items = cart.items.filter((i) => i.file.toString() !== fileId);
   await cart.save();
-  const populated = await cart.populate('items.file', 'originalName description coverImageKey price');
+  const populated = await cart.populate('items.file', 'title originalName description coverImageKey price');
   return await resolveCartData(populated);
 };
 
