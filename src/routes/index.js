@@ -8,6 +8,7 @@ import categoryRoutes from './category.routes.js';
 import productTypeRoutes from './productType.routes.js';
 import adminRoutes from './admin.routes.js';
 import favoriteRoutes from './favorite.routes.js';
+import settingsRoutes from './settings.routes.js';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/categories',    categoryRoutes);
 router.use('/product-types', productTypeRoutes);
 router.use('/admin',         adminRoutes);
 router.use('/favorites',     favoriteRoutes);
+router.use('/settings',      settingsRoutes);
 
 export default router;

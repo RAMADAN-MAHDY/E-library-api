@@ -10,20 +10,23 @@
  */
 const validate = (schema) => (req, res, next) => {
   const { error, value } = schema.validate(req.body, {
-    abortEarly: false,   // collect ALL errors, not just the first
-    stripUnknown: true,  // strip unknown keys for safety
+    abortEarly: false,
+    stripUnknown: true,
   });
 
   if (error) {
-    const details = error.details.map((d) => d.message.replace(/"/g, "'"));
+    const errors = error.details.map((d) => ({
+      field: d.path.join('.'),
+      message: d.message.replace(/"/g, "'"),
+    }));
+
     return res.status(422).json({
       status: 'error',
       message: 'Validation failed.',
-      errors: details,
+      errors,
     });
   }
 
-  // Replace req.body with the sanitised/coerced value from Joi
   req.body = value;
   next();
 };
