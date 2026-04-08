@@ -61,15 +61,7 @@ export const googleCallback = async (req, res, next) => {
     const token = authService.signToken(user);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    // أرسل التوكن بشكل آمن في HttpOnly Cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-
-    res.redirect(frontendUrl);
+    res.redirect(`${frontendUrl}?token=${token}`);
   } catch (err) {
     next(err);
   }
