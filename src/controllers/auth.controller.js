@@ -61,7 +61,7 @@ export const googleCallback = async (req, res, next) => {
     const token = authService.signToken(user);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    res.redirect(`${frontendUrl}?token=${token}`);
+    res.redirect(`${frontendUrl}/auth-success?token=${token}`);
   } catch (err) {
     next(err);
   }
