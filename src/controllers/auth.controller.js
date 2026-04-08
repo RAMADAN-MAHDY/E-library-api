@@ -38,9 +38,11 @@ export const registerAdmin = async (req, res, next) => {
 };
 
 export const googleCallback = (req, res) => {
-  const token = authService.generateToken(req.user);
+  const token = authService.signToken(req.user);
+
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   res.redirect(`${frontendUrl}/auth-success?token=${token}`);
+
 };
 
 export const getMe = async (req, res, next) => {
