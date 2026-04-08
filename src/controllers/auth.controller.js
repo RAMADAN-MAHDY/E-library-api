@@ -37,12 +37,42 @@ export const registerAdmin = async (req, res, next) => {
   }
 };
 
-export const googleCallback = (req, res) => {
-  const token = authService.signToken(req.user);
+export const googleCallback = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      const err = new Error('Google authentication failed.');
+      err.statusCode = 401;
+      throw err;
+    }
 
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  res.redirect(`${frontendUrl}/auth-success?token=${token}`);
+    // تحقق إذا اليوزر موجود في الـ Database
+    let user = await User.findOne({ googleId: req.user.googleId });
 
+    // لو مش موجود - انشئ حساب جديد
+    if (!user) {
+      user = await User.create({
+        name: req.user.displayName,
+        email: req.user.emails?.[0]?.value,
+        googleId: req.user.googleId,
+        avatar: req.user.photos?.[0]?.value,
+      });
+    }
+
+    const token = authService.signToken(user);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    // أرسل التوكن بشكل آمن في HttpOnly Cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    res.redirect(frontendUrl);
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getMe = async (req, res, next) => {
