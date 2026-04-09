@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import Payment from '../models/Payment.js';
 import File from '../models/File.js';
 import User from '../models/User.js';
+import { getCoverImageUrl } from './file.service.js';
 
 /**
  * Handle Stripe Payment
@@ -163,7 +164,15 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
   const payment = await Payment.findOne({
     transactionId: transactionId.toString(),
     user: userId
-  }).populate('book', 'title price');
+  }).populate('book', 'title price coverImageKey');
+
+  if (payment && payment.book) {
+    const paymentObj = payment.toObject();
+    const result = await getCoverImageUrl(payment.book._id);
+    paymentObj.book.id = payment.book._id;
+    paymentObj.book.coverUrl = result.url;
+    return paymentObj;
+  }
 
   return payment;
 };
@@ -197,8 +206,22 @@ export const getStats = async () => {
 };
 
 export const getPayments = async (query = {}) => {
-  return await Payment.find(query)
+  const payments = await Payment.find(query)
     .populate('user', 'name email')
-    .populate('book', 'title price')
+    .populate('book', 'title price coverImageKey')
     .sort({ createdAt: -1 });
+
+  // Resolve cover URLs for each payment's book
+  return await Promise.all(
+    payments.map(async (p) => {
+      const paymentObj = p.toObject();
+      if (paymentObj.book) {
+        // We use the helper directly if possible, or just the same logic
+        const result = await getCoverImageUrl(paymentObj.book._id);
+        paymentObj.book.id = paymentObj.book._id;
+        paymentObj.book.coverUrl = result.url;
+      }
+      return paymentObj;
+    })
+  );
 };

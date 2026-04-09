@@ -11,6 +11,24 @@
 
 ---
 
+## 📦 الشكل العام للرد (Standard Response structure)
+جميع الردود الناجحة تأتي بهذا الشكل:
+```json
+{
+  "status": "success",
+  "data": { ... } // هنا توجد البيانات الفعلية (أو مصفوفة بيانات)
+}
+```
+في حالة وجود خطأ:
+```json
+{
+  "status": "error",
+  "message": "رسالة توضح سبب الخطأ"
+}
+```
+
+---
+
 ## 🔐 نظام الحسابات (Authentication)
 
 ### 1. إنشاء حساب (Register)
@@ -20,6 +38,22 @@
 ### 2. تسجيل الدخول (Login)
 *   **المسار**: `POST /auth/login`
 *   **البيانات**: `{ email, password }`
+
+#### شكل الرد (Response):
+```json
+{
+  "status": "success",
+  "data": {
+    "user": {
+      "id": "65f...",
+      "name": "User Name",
+      "email": "user@example.com",
+      "role": "user" // أو "admin"
+    },
+    "token": "eyJhbG..." // توكن JWT
+  }
+}
+```
 
 ### 3. تسجيل الدخول عبر جوجل (Google Auth)
 هذه العملية تعتمد على التحويل (Redirect) وليس طلب API مباشر من الكود:
@@ -54,14 +88,62 @@ const fetchBooks = async () => {
       q: 'تاريخ'
     }
   });
-  console.log(data.data); // قائمة الكتب
-  console.log(data.pagination); // معلومات الصفحات (totalResults, totalPages, etc)
+  console.log(data.data); // قائمة الكتب كما في المثال التالي
+  console.log(data.pagination); // معلومات الترقيم
 };
+```
+
+#### شكل الرد للقوائم (Paginated Response):
+هذا الشكل ينطبق على `GET /files`, `GET /files/on-sale`:
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": "65f...",
+      "title": "عنوان الكتاب",
+      "description": "وصف قصير",
+      "price": 100, // السعر الأصلي (بالسنت)
+      "discountPrice": 80, // السعر بعد الخصم (إن وجد)
+      "isOnSale": true,
+      "coverUrl": "https://...", // رابط الصورة
+      "category": { "_id": "...", "name": "اسم المجال" },
+      "productType": { "_id": "...", "name": "كتاب" },
+      "createdAt": "2024-..."
+    }
+  ],
+  "pagination": {
+    "totalResults": 50,
+    "totalPages": 5,
+    "currentPage": 1,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
 ```
 
 ### 2. تفاصيل كتاب معين
 *   **المسار**: `GET /files/:id`
-*   **الوصف**: يرجع كافة التفاصيل بما في ذلك المجال والنوع والخصومات.
+*   **الوصف**: يرجع كافة التفاصيل.
+
+#### شكل الرد (Response):
+يرجع كائن (Object) يحتوي على بيانات إضافية مثل `size` و `mimeType`:
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "65f...",
+    "title": "...",
+    "price": 100,
+    "coverUrl": "...",
+    "size": 102450, // حجم الملف بالبايت
+    "mimeType": "application/pdf",
+    "category": { ... },
+    "productType": { ... }
+  }
+}
+```
 
 ### 3. جلب العروض والخصومات فقط (On Sale)
 *   **المسار**: `GET /files/on-sale`
@@ -80,8 +162,9 @@ const fetchBooks = async () => {
 ## 🗂️ القوائم المساعدة (Filters)
 لإظهار قائمة المجالات أو الأنواع في "القائمة الجانبية" للفلترة:
 *   **المجالات**: `GET /categories`
-    *   *ملاحظة*: كل مجال سيرجع معه الحقل `coverUrl` وهو رابط مؤقت لصورة الغلاف الخاصة به.
+    *   **الرد**: مصفوفة من المجالات `{ _id, name, description, coverUrl }`.
 *   **الأنواع**: `GET /product-types`
+    *   **الرد**: مصفوفة من الأنواع `{ _id, name }`.
 
 ---
 
@@ -126,6 +209,17 @@ const fetchBooks = async () => {
 *   **عرض المفضلة**: `GET /favorites`
 *   **إضافة للمفضلة**: `POST /favorites/add` -> البيانات: `{ fileId }`
 *   **حذف من المفضلة**: `DELETE /favorites/remove/:fileId`
+
+#### شكل الرد (Response):
+يرجع مصفوفة من الكتب المفضلة بنفس شكل بيانات الكتاب في `GET /files`:
+```json
+{
+  "status": "success",
+  "data": [
+    { "id": "...", "title": "...", "price": 100, "coverUrl": "..." }
+  ]
+}
+```
 
 ---
 
@@ -202,21 +296,67 @@ const handlePurchase = async (bookId, method = 'stripe') => {
 
 **المهمة**: استخدم الـ `orderId` (أو الـ `transactionId` في حالة Stripe) لجلب تفاصيل العملية والتأكد من نجاحها ومعرفة ID الكتاب المرتبط بها.
 *   **المسار**: `GET /payments/:transactionId` (يتطلب تسجيل دخول).
-*   **البيانات المستلمة**: ترجع تفاصيل العملية بالكامل، بما في ذلك `book` (يحتوي على الـ `id` والـ `title`).
+
+#### شكل الرد (Response):
+```json
+{
+  "status": "success",
+  "data": {
+    "_id": "65f...",
+    "status": "succeeded",
+    "amount": 1000,
+    "provider": "paymob",
+    "book": {
+      "id": "65f...",
+      "title": "اسم الكتاب",
+      "price": 1000,
+      "coverUrl": "https://..."
+    },
+    "createdAt": "..."
+  }
+}
+```
 
 ### 5. عرض سجل المشتريات (مكتبتي)
-لإظهار قائمة بكافة الكتب التي اشتراها المستخدم بنجاح:
+إظهار قائمة بكافة كافية الكتب التي اشتراها المستخدم بنجاح:
 *   **المسار**: `GET /payments/my-purchases` (يتطلب تسجيل دخول).
-*   **الوصف**: يرجع قائمة بكل العمليات الناجحة (`succeeded`) فقط، مع كافة تفاصيل الكتب المرتبطة بها.
+
+#### شكل الرد (Response):
+يرجع مصفوفة من عمليات الشراء الناجحة:
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "_id": "...",
+      "status": "succeeded",
+      "book": { 
+        "id": "...", 
+        "title": "...", 
+        "price": 1000,
+        "coverUrl": "..." 
+      }
+    }
+  ]
+}
+```
 
 ---
 
 ## 📥 التحميل (Downloads)
 بعد نجاح الشراء، يمكن للمستخدم طلب رابط التحميل المؤقت.
 *   **المسار**: `GET /files/:id/download-link` (يتطلب تسجيل دخول).
-*   **القواعد**: السيرفر يسمح بالتحميل **فقط** إذا كان المستخدم هو "ناشر الكتاب" أو "مشترٍ فعلي" للكتاب (لديه سجل دفع بحالة `succeeded` حصراً).
-*   **الحالات الاستثنائية**: إذا كانت حالة الدفع `refunded` أو `disputed` (نزاع بنكي)، سيقوم السيرفر برفض طلب التحميل وإرجاع خطأ `403`.
-*   **النتيجة**: رابط مؤقت (Presigned URL) ينتهي مفعوله بعد 5 دقائق لضمان الأمان.
+
+#### شكل الرد (Response):
+```json
+{
+  "status": "success",
+  "data": {
+    "url": "https://r2.storage.com/temp-link-to-file...",
+    "expiresIn": 300 // الرابط صالح لمدة 5 دقائق
+  }
+}
+```
 
 ---
 
