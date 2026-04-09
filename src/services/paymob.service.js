@@ -127,6 +127,24 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
 };
 
 /**
+ * Step 4: Pay with Wallet (Optional, only for Wallets)
+ * @param {string} payment_token 
+ * @param {string} phone 
+ * @returns {Promise<string>} redirect_url
+ */
+const payWithWallet = async (payment_token, phone) => {
+  const response = await axios.post(`${PAYMOB_BASE_URL}/acceptance/payments/pay`, {
+    source: {
+      identifier: phone,
+      subtype: "WALLET"
+    },
+    payment_token: payment_token
+  });
+  // This is the URL that handles the wallet redirection
+  return response.data.iframe_redirection_url || response.data.redirect_url;
+};
+
+/**
  * Full Flow to get Payment Link
  */
 export const createPaymentLink = async (amount_cents, currency, userData) => {
@@ -135,6 +153,17 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
     const order_id = await registerOrder(auth_token, amount_cents, currency);
     const payment_key = await getPaymentKey(auth_token, order_id, amount_cents, currency, userData);
 
+    // If phone is provided, we use the Wallet Flow (No Iframe needed)
+    if (userData.phone && userData.phone !== '00000000000') {
+      console.log(`📱 [Paymob] Initiating Wallet Flow for: ${userData.phone}`);
+      const walletUrl = await payWithWallet(payment_key, userData.phone);
+      return {
+        link: walletUrl,
+        orderId: order_id
+      };
+    }
+
+    // Default: Card Iframe Flow
     return {
       link: `https://accept.paymob.com/api/acceptance/iframes/${env.PAYMOB_IFRAME_ID}?payment_token=${payment_key}`,
       orderId: order_id
