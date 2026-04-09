@@ -9,9 +9,11 @@ import { getCoverImageUrl } from './file.service.js';
 /**
  * Handle Stripe Payment
  */
-const initiateStripe = async (book, totalAmount, quantity, currency, userId) => {
+const initiateStripe = async (book, totalAmountMainUnit, quantity, currency, userId) => {
+  const amountCents = Math.round(totalAmountMainUnit * 100);
+
   const intent = await stripe.paymentIntents.create({
-    amount: totalAmount,
+    amount: amountCents,
     currency,
     metadata: {
       userId: userId.toString(),
@@ -26,7 +28,7 @@ const initiateStripe = async (book, totalAmount, quantity, currency, userId) => 
     book: book._id,
     transactionId: intent.id,
     provider: 'stripe',
-    amount: intent.amount,
+    amount: amountCents, // Store in cents
     currency,
     status: 'requires_payment_method',
   });
@@ -35,7 +37,7 @@ const initiateStripe = async (book, totalAmount, quantity, currency, userId) => 
     provider: 'stripe',
     clientSecret: intent.client_secret,
     transactionId: intent.id,
-    totalPrice: totalAmount,
+    amount: totalAmountMainUnit, // Return in main unit
     bookTitle: book.title,
   };
 };
@@ -43,11 +45,12 @@ const initiateStripe = async (book, totalAmount, quantity, currency, userId) => 
 /**
  * Handle Paymob Payment
  */
-const initiatePaymob = async (book, totalAmount, quantity, currency, userId, phone) => {
+const initiatePaymob = async (book, totalAmountMainUnit, quantity, currency, userId, phone) => {
   const user = await User.findById(userId);
+  const amountCents = Math.round(totalAmountMainUnit * 100);
 
   // Paymob creates an "Order" and a "Payment Key"
-  const { link, orderId } = await paymobHandler(totalAmount, currency.toUpperCase(), {
+  const { link, orderId } = await paymobHandler(amountCents, currency.toUpperCase(), {
     name: user.name,
     email: user.email,
     phone: phone || user.phone || '01000000000' // Using input phone first
@@ -59,7 +62,7 @@ const initiatePaymob = async (book, totalAmount, quantity, currency, userId, pho
     book: book._id,
     transactionId: orderId.toString(),
     provider: 'paymob',
-    amount: totalAmount,
+    amount: amountCents, // Store in cents
     currency,
     status: 'pending',
   });
@@ -68,7 +71,7 @@ const initiatePaymob = async (book, totalAmount, quantity, currency, userId, pho
     provider: 'paymob',
     paymentLink: link,
     transactionId: orderId,
-    totalPrice: totalAmount,
+    amount: totalAmountMainUnit, // Return in main unit
     bookTitle: book.title,
   };
 };
@@ -81,13 +84,13 @@ export const createPayment = async (bookId, provider = 'stripe', quantity = 1, c
   if (!book) throw new Error('Book not found.');
 
   const unitPrice = (book.isOnSale && book.discountPrice !== null) ? book.discountPrice : book.price;
-  const totalAmount = Math.round(unitPrice * quantity);
+  const totalAmountMainUnit = unitPrice * quantity;
 
   if (provider === 'paymob') {
-    return await initiatePaymob(book, totalAmount, quantity, currency, userId, phone);
+    return await initiatePaymob(book, totalAmountMainUnit, quantity, currency, userId, phone);
   }
 
-  return await initiateStripe(book, totalAmount, quantity, currency, userId);
+  return await initiateStripe(book, totalAmountMainUnit, quantity, currency, userId);
 };
 
 /**
@@ -161,20 +164,51 @@ export const updatePaymentStatus = async (transactionId, status) => {
 };
 
 export const getPaymentByTransactionId = async (transactionId, userId) => {
-  const payment = await Payment.findOne({
+  let payment = await Payment.findOne({
     transactionId: transactionId.toString(),
     user: userId
   }).populate('book', 'title price coverImageKey');
 
-  if (payment && payment.book) {
-    const paymentObj = payment.toObject();
-    const result = await getCoverImageUrl(payment.book._id);
-    paymentObj.book.id = payment.book._id;
-    paymentObj.book.coverUrl = result.url;
-    return paymentObj;
+  if (!payment) return null;
+
+  // ─── Fail-safe: Real-time Status Verification ───
+  // If DB status is not succeeded, ask the provider directly
+  if (payment.status !== 'succeeded') {
+    try {
+      if (payment.provider === 'stripe') {
+        const intent = await stripe.paymentIntents.retrieve(payment.transactionId);
+        if (intent.status === 'succeeded') {
+          payment.status = 'succeeded';
+          await payment.save();
+        }
+      } 
+      else if (payment.provider === 'paymob') {
+        // Paymob status check (requires a special service call)
+        // Here we can use the GET callback status if available or leave it to webhook/redirect
+        // For Paymob, we prioritize the HMAC-verified redirect status
+      }
+    } catch (err) {
+      console.error(`❌ [Status Sync Error] for ${payment.provider}:`, err.message);
+    }
   }
 
-  return payment;
+  const paymentObj = payment.toObject();
+  const result = await getCoverImageUrl(payment.book?._id);
+  
+  // Format based on the requested structure
+  return {
+    _id: paymentObj._id,
+    status: payment.status, // Use updated status
+    amount: paymentObj.amount / 100, // Convert to main unit
+    provider: paymentObj.provider,
+    book: payment.book ? {
+      id: payment.book._id,
+      title: payment.book.title,
+      price: payment.book.price,
+      coverUrl: result.url
+    } : null,
+    createdAt: paymentObj.createdAt
+  };
 };
 
 export const getStats = async () => {
@@ -198,7 +232,7 @@ export const getStats = async () => {
 
   stats.forEach(s => {
     if (result[s._id]) {
-      result[s._id] = { amount: s.totalAmount, count: s.count };
+      result[s._id] = { amount: s.totalAmount / 100, count: s.count };
     }
   });
 
@@ -211,16 +245,19 @@ export const getPayments = async (query = {}) => {
     .populate('book', 'title price coverImageKey')
     .sort({ createdAt: -1 });
 
-  // Resolve cover URLs for each payment's book
+  // Resolve cover URLs and format response
   return await Promise.all(
     payments.map(async (p) => {
       const paymentObj = p.toObject();
       if (paymentObj.book) {
-        // We use the helper directly if possible, or just the same logic
         const result = await getCoverImageUrl(paymentObj.book._id);
         paymentObj.book.id = paymentObj.book._id;
         paymentObj.book.coverUrl = result.url;
       }
+      
+      // Convert amount to main unit
+      paymentObj.amount = paymentObj.amount / 100;
+      
       return paymentObj;
     })
   );
