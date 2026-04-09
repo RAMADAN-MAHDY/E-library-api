@@ -155,19 +155,21 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
 
     // If phone is provided, we use the Wallet Flow (No Iframe needed)
     if (userData.phone && userData.phone.length >= 10 && userData.phone !== '00000000000') {
-      const cleanPhone = userData.phone.replace(/\s/g, ''); // Remove any spaces
+      const cleanPhone = userData.phone.replace(/\s/g, '').replace('+2', ''); // Clean phone
       console.log(`📱 [Paymob] Attempting Wallet Flow for: ${cleanPhone}`);
       
       try {
         const walletUrl = await payWithWallet(payment_key, cleanPhone);
-        return {
-          link: walletUrl,
-          orderId: order_id
-        };
+        if (walletUrl) {
+          return {
+            link: walletUrl,
+            orderId: order_id
+          };
+        }
       } catch (walletErr) {
-        console.warn('⚠️ [Paymob] Wallet Flow failed, falling back to Iframe:', walletErr.message);
-        // If wallet specific flow fails (e.g. integration ID not supporting wallets), 
-        // we fallback to the standard Iframe link
+        const errMsg = walletErr.response?.data?.message || walletErr.message;
+        console.warn('⚠️ [Paymob] Wallet Flow failed. Reason:', errMsg);
+        console.log('🔄 [Paymob] Falling back to standard Iframe flow.');
       }
     }
 
@@ -177,13 +179,13 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
       orderId: order_id
     };
   } catch (err) {
-    // Detailed error capture
     const errorBody = err.response?.data;
+    console.error('🚨 [Paymob Critical Error]:', JSON.stringify(errorBody || err.message));
+    
     const detail = typeof errorBody === 'object'
-      ? (errorBody.message || errorBody.detail || JSON.stringify(errorBody))
+      ? (errorBody.message || errorBody.detail || errorBody.error_message || JSON.stringify(errorBody))
       : String(errorBody || err.message);
 
-    console.error('🚨 Paymob Final Diagnostic:', errorBody || err.message);
-    throw new Error(`Paymob Error: ${detail}`);
+    throw new Error(`Paymob: ${detail}`);
   }
 };
