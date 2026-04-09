@@ -83,7 +83,9 @@ export const createPayment = async (bookId, provider = 'stripe', quantity = 1, c
   const book = await File.findById(bookId);
   if (!book) throw new Error('Book not found.');
 
-  const unitPrice = (book.isOnSale && book.discountPrice !== null) ? book.discountPrice : book.price;
+  // Treat DB price/discountPrice as cents and convert to main units for processing
+  const rawPrice = (book.isOnSale && book.discountPrice !== null) ? book.discountPrice : book.price;
+  const unitPrice = rawPrice / 100; 
   const totalAmountMainUnit = unitPrice * quantity;
 
   if (provider === 'paymob') {
