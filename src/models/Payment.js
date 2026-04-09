@@ -38,6 +38,14 @@ const paymentSchema = new mongoose.Schema(
       enum: ['pending', 'succeeded', 'failed', 'canceled', 'requires_payment_method', 'refunded', 'disputed'],
       default: 'pending',
     },
+    isDownloaded: {
+      type: Boolean,
+      default: false,
+    },
+    downloadExpiry: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

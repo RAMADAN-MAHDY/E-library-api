@@ -155,20 +155,43 @@ export const getDownloadLink = async (fileId, user) => {
   }
 
   // Check if user is the owner OR has a successful payment for this file
-  const hasPaid = await Payment.findOne({
+  const payment = await Payment.findOne({
     user: requesterId,
     book: fileId,
     status: 'succeeded'
   });
 
-  if (file.owner.toString() !== requesterId && user.role !== 'admin' && !hasPaid) {
+  if (file.owner.toString() !== requesterId && user.role !== 'admin' && !payment) {
     const err = new Error('Forbidden: you do not have access to download this file. Please purchase it first.');
     err.statusCode = 403;
     throw err;
   }
 
+  // One-time download enforcement for normal users
+  if (user.role !== 'admin' && file.owner.toString() !== requesterId) {
+    if (payment.isDownloaded && payment.downloadExpiry && new Date() > payment.downloadExpiry) {
+      const err = new Error('This book has already been downloaded and the temporary access window has expired.');
+      err.statusCode = 403;
+      throw err;
+    }
+    
+    // Mark as downloaded if it's the first time
+    if (!payment.isDownloaded) {
+      payment.isDownloaded = true;
+      payment.downloadExpiry = new Date(Date.now() + env.DOWNLOAD_LINK_EXPIRY_SECONDS * 1000);
+      await payment.save();
+    }
+  }
+
   const url = await buildPresignedUrl(file.r2Key, file.originalName, env.DOWNLOAD_LINK_EXPIRY_SECONDS);
-  return { url, expiresIn: env.DOWNLOAD_LINK_EXPIRY_SECONDS };
+  
+  return { 
+    url, 
+    expiresIn: env.DOWNLOAD_LINK_EXPIRY_SECONDS,
+    expiresAt: payment?.downloadExpiry || new Date(Date.now() + env.DOWNLOAD_LINK_EXPIRY_SECONDS * 1000),
+    serverTime: new Date(),
+    isDownloaded: payment?.isDownloaded || false
+  };
 };
 
 /**

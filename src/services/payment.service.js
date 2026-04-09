@@ -209,7 +209,10 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
       price: payment.book.price,
       coverUrl: result.url
     } : null,
-    createdAt: paymentObj.createdAt
+    createdAt: paymentObj.createdAt,
+    isDownloaded: paymentObj.isDownloaded || false,
+    downloadExpiry: paymentObj.downloadExpiry || null,
+    serverTime: new Date()
   };
 };
 
