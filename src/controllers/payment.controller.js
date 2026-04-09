@@ -6,7 +6,17 @@ export const createIntent = async (req, res, next) => {
   try {
     const { bookId, quantity, currency, provider, phone } = req.body;
     const result = await paymentService.createPayment(bookId, provider, quantity, currency, req.user.id, phone);
-    res.status(201).json({ status: 'success', data: result });
+    
+    // المسار الجديد لصفحة حالة الدفع
+    const redirectionUrl = `${env.FRONTEND_URL}/payment-status`;
+    
+    res.status(201).json({ 
+      status: 'success', 
+      data: { 
+        ...result,
+        redirectionUrl 
+      } 
+    });
   } catch (err) {
     next(err);
   }

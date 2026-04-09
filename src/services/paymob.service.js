@@ -41,12 +41,12 @@ export const verifyPaymobHMAC = (query) => {
 
       // 2. البحث المتداخل (مهم للـ POST Webhooks)
       let value = key.split('.').reduce((o, i) => (o ? o[i] : undefined), query);
-      
+
       // 3. حالة خاصة لحقل order.id في روابط الـ GET يسمى order فقط
       if (key === 'order.id' && (value === '' || value === undefined)) {
         value = query.order;
       }
-      
+
       return (value !== undefined && value !== null) ? String(value) : '';
     })
     .join('');
@@ -120,6 +120,7 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
       state: 'NA',
     },
     currency,
+    redirection_url: `${env.FRONTEND_URL}/payment-status`,
     integration_id: Number(env.PAYMOB_INTEGRATION_ID),
   });
   return response.data.token;
@@ -141,7 +142,7 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
   } catch (err) {
     // Detailed error capture
     const errorBody = err.response?.data;
-    const detail = typeof errorBody === 'object' 
+    const detail = typeof errorBody === 'object'
       ? (errorBody.message || errorBody.detail || JSON.stringify(errorBody))
       : String(errorBody || err.message);
 
