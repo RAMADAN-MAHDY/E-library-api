@@ -143,34 +143,57 @@ const fetchBooks = async () => {
     *   `quantity`: (اختياري) الكمية.
 
 ### 2. التعامل مع النتيجة (Stripe)
-إذا اخترت `provider: "stripe"`، سيرجع لك السيرفر **clientSecret**.
-*   **المهمة**: استخدم الـ `clientSecret` مع مكتبة Stripe React/JS لإظهار نموذج الدفع (Elements) داخل موقعك.
+إذا اخترت `provider: "stripe"`، سيرجع لك السيرفر **clientSecret** و **redirectionUrl**.
+*   **المهمة**: 
+    1. استخدم الـ `clientSecret` مع مكتبة Stripe React/JS لإظهار نموذج الدفع.
+    2. عند استدعاء دالة التأكيد `confirmPayment` في الفرونت إند، قم بتمرير الـ `redirectionUrl` المستلم في خانة الـ `return_url`. ستقوم Stripe بتحويل المستخدم لهذا الرابط تلقائياً بعد نجاح الدفع.
 
 ### 3. التعامل مع النتيجة (Paymob)
-إذا اخترت `provider: "paymob"`، سيرجع لك السيرفر **paymentLink**.
-*   **المهمة**: قم بتوجيه المستخدم (Redirect) لهذا الرابط ليقوم بالدفع في صفحة Paymob الخارجية.
+إذا اخترت `provider: "paymob"`، سيرجع لك السيرفر **paymentLink** و **redirectionUrl**.
+*   **المهمة**: قم بتوجيه المستخدم (Redirect) لـ `paymentLink` ليقوم بالدفع. سيعود المستخدم تلقائياً لـ `redirectionUrl` (وهو `/payment-status`) بعد معالجة الطلب في الخلفية.
+
+
+### 3. مثال متكامل لبدء عملية الدفع (Full Example)
+هذا الكود يوضح كيفية طلب الدفع والتعامل مع النتيجة بناءً على الوسيلة المختارة:
 
 ```javascript
-// مثال طلب دفع عبر Paymob
-const startPayment = async (bookId) => {
-  const { data } = await axios.post('/payments/create-intent', {
-    bookId: bookId,
-    provider: 'paymob',
-    currency: 'EGP',
-    phone: '01012345678' // يجب توفير رقم الهاتف لـ Paymob
-  }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  
-  if (data.data.provider === 'paymob') {
-    // توجيه العميل لصفحة Paymob الخارجية
-    window.location.assign(data.data.paymentLink);
-  } else {
-    // إتمام الدفع داخل الموقع عبر Stripe
-    const clientSecret = data.data.clientSecret;
-    // ... Stripe Logic ...
+const handlePurchase = async (bookId, method = 'stripe') => {
+  try {
+    // 1. طلب إنشاء عملية الدفع من السيرفر
+    const { data } = await axios.post('/payments/create-intent', {
+      bookId: bookId,
+      provider: method, // 'stripe' أو 'paymob'
+      currency: 'EGP',
+      phone: '01012345678' // مطلوب لـ Paymob
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const { paymentLink, clientSecret, redirectionUrl, provider } = data.data;
+
+    // 2. التحقق من الوسيلة المختارة وتنفيذ الخطوة التالية
+    if (provider === 'paymob') {
+      // حالة Paymob: قم بتحويل المستخدم لصفحة الدفع الخارجية فوراً
+      // السيرفر سيعيد المستخدم لـ redirectionUrl تلقائياً بعد الدفع
+      window.location.assign(paymentLink);
+    } 
+    else if (provider === 'stripe') {
+      // حالة Stripe: استخدم الـ clientSecret مع مكتبة Stripe
+      const stripe = await loadStripe('your_publishable_key');
+      
+      const session = await stripe.confirmPayment({
+        elements, // نموذج الدفع الخاص بـ Stripe
+        confirmParams: {
+          // هـــــام: استخدم الرابط المستلم من السيرفر هنا
+          return_url: redirectionUrl, 
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Payment Error:", error.response?.data?.message || error.message);
   }
 };
+```
 ```
 
 ### 4. التحقق من حالة الدفع (بعد الرجوع من بوابة الدفع)
