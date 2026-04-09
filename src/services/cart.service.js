@@ -9,19 +9,30 @@ const resolveCartData = async (cartDoc) => {
   if (!cartDoc) return null;
   
   const cartObj = cartDoc.toJSON ? cartDoc.toJSON() : cartDoc;
+  // Calculate total price dynamically considering discounts
+  let calculatedTotal = 0;
   
   if (cartObj.items && cartObj.items.length > 0) {
     cartObj.items = await Promise.all(
       cartObj.items.map(async (item) => {
-        if (item.file && item.file.coverImageKey) {
-          const result = await getCoverImageUrl(item.file._id || item.file.id);
-          item.file.coverUrl = result.url;
+        const book = item.file;
+        if (book) {
+          // Resolve cover URL
+          if (book.coverImageKey) {
+            const result = await getCoverImageUrl(book._id || book.id);
+            book.coverUrl = result.url;
+          }
+          
+          // Use discount price if on sale
+          const currentPrice = (book.isOnSale && book.discountPrice) ? book.discountPrice : (book.price || 0);
+          calculatedTotal += (currentPrice * item.quantity);
         }
         return item;
       })
     );
   }
   
+  cartObj.total = calculatedTotal; // Override the virtual total with our accurate calculation
   return cartObj;
 };
 
