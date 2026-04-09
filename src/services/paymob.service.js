@@ -154,13 +154,21 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
     const payment_key = await getPaymentKey(auth_token, order_id, amount_cents, currency, userData);
 
     // If phone is provided, we use the Wallet Flow (No Iframe needed)
-    if (userData.phone && userData.phone !== '00000000000') {
-      console.log(`📱 [Paymob] Initiating Wallet Flow for: ${userData.phone}`);
-      const walletUrl = await payWithWallet(payment_key, userData.phone);
-      return {
-        link: walletUrl,
-        orderId: order_id
-      };
+    if (userData.phone && userData.phone.length >= 10 && userData.phone !== '00000000000') {
+      const cleanPhone = userData.phone.replace(/\s/g, ''); // Remove any spaces
+      console.log(`📱 [Paymob] Attempting Wallet Flow for: ${cleanPhone}`);
+      
+      try {
+        const walletUrl = await payWithWallet(payment_key, cleanPhone);
+        return {
+          link: walletUrl,
+          orderId: order_id
+        };
+      } catch (walletErr) {
+        console.warn('⚠️ [Paymob] Wallet Flow failed, falling back to Iframe:', walletErr.message);
+        // If wallet specific flow fails (e.g. integration ID not supporting wallets), 
+        // we fallback to the standard Iframe link
+      }
     }
 
     // Default: Card Iframe Flow
