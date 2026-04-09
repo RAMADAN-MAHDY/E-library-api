@@ -115,7 +115,11 @@ export const getMyPurchases = async (req, res, next) => {
   try {
     const query = { user: req.user.id, status: 'succeeded' };
     const payments = await paymentService.getPayments(query);
-    res.status(200).json({ status: 'success', data: payments });
+    res.status(200).json({ 
+      status: 'success', 
+      data: payments,
+      serverTime: new Date()
+    });
   } catch (err) {
     next(err);
   }

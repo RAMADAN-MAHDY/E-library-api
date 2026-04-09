@@ -177,9 +177,13 @@ export const getDownloadLink = async (fileId, user) => {
     
     // Mark as downloaded if it's the first time
     if (!payment.isDownloaded) {
+      console.log(`📝 [DOWNLOAD TRACKER] Marking book ${fileId} as downloaded for user ${requesterId}`);
       payment.isDownloaded = true;
       payment.downloadExpiry = new Date(Date.now() + env.DOWNLOAD_LINK_EXPIRY_SECONDS * 1000);
       await payment.save();
+      console.log(`✅ [DOWNLOAD TRACKER] Payment status persistent in DB.`);
+    } else {
+      console.log(`ℹ️ [DOWNLOAD TRACKER] User ${requesterId} re-requested link for book ${fileId}. Expiry: ${payment.downloadExpiry}`);
     }
   }
 

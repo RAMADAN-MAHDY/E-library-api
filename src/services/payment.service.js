@@ -260,8 +260,11 @@ export const getPayments = async (query = {}) => {
         paymentObj.book.coverUrl = result.url;
       }
       
-      // Convert amount to main unit
+      // Convert amount and ensure download fields are present
       paymentObj.amount = paymentObj.amount / 100;
+      paymentObj.isDownloaded = p.isDownloaded || false;
+      paymentObj.downloadExpiry = p.downloadExpiry || null;
+      paymentObj.serverTime = new Date();
       
       return paymentObj;
     })
