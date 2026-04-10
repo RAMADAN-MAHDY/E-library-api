@@ -45,7 +45,7 @@ const initiateStripe = async (book, totalAmountMainUnit, quantity, currency, use
 /**
  * Handle Paymob Payment
  */
-const initiatePaymob = async (book, totalAmountMainUnit, quantity, currency, userId, phone) => {
+const initiatePaymob = async (book, totalAmountMainUnit, quantity, currency, userId, phone, paymentMethod) => {
   const user = await User.findById(userId);
   const amountCents = Math.round(totalAmountMainUnit * 100);
 
@@ -53,7 +53,8 @@ const initiatePaymob = async (book, totalAmountMainUnit, quantity, currency, use
   const { link, orderId } = await paymobHandler(amountCents, currency.toUpperCase(), {
     name: user.name,
     email: user.email,
-    phone: phone || user.phone || '01000000000' // Using input phone first
+    phone: phone || user.phone || '01000000000', // Using input phone first
+    paymentMethod // Passing choice to paymob service
   });
 
   // Save the "Pending" payment record in our DB
@@ -79,17 +80,17 @@ const initiatePaymob = async (book, totalAmountMainUnit, quantity, currency, use
 /**
  * Common entry point for creating payments.
  */
-export const createPayment = async (bookId, provider = 'stripe', quantity = 1, currency = 'usd', userId, phone) => {
+export const createPayment = async (bookId, provider = 'stripe', quantity = 1, currency = 'usd', userId, phone, paymentMethod) => {
   const book = await File.findById(bookId);
   if (!book) throw new Error('Book not found.');
 
   // Treat DB price/discountPrice as cents and convert to main units for processing
   const rawPrice = (book.isOnSale && book.discountPrice !== null) ? book.discountPrice : book.price;
-  const unitPrice = rawPrice / 100; 
+  const unitPrice = rawPrice / 100;
   const totalAmountMainUnit = unitPrice * quantity;
 
   if (provider === 'paymob') {
-    return await initiatePaymob(book, totalAmountMainUnit, quantity, currency, userId, phone);
+    return await initiatePaymob(book, totalAmountMainUnit, quantity, currency, userId, phone, paymentMethod);
   }
 
   return await initiateStripe(book, totalAmountMainUnit, quantity, currency, userId);
@@ -117,8 +118,8 @@ export const processWebhook = async (payload, signature) => {
       { transactionId: event.data.object.id },
       { status: 'failed' }
     );
-  } 
-  
+  }
+
   // 2. Refunds
   else if (event.type === 'charge.refunded') {
     const charge = event.data.object;
@@ -183,7 +184,7 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
           payment.status = 'succeeded';
           await payment.save();
         }
-      } 
+      }
       else if (payment.provider === 'paymob') {
         // Paymob status check (requires a special service call)
         // Here we can use the GET callback status if available or leave it to webhook/redirect
@@ -196,7 +197,7 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
 
   const paymentObj = payment.toObject();
   const result = await getCoverImageUrl(payment.book?._id);
-  
+
   // Format based on the requested structure
   return {
     _id: paymentObj._id,
@@ -260,13 +261,13 @@ export const getPayments = async (query = {}) => {
         paymentObj.book.price = paymentObj.book.price / 100;
         paymentObj.book.coverUrl = result.url;
       }
-      
+
       // Convert amount and ensure download fields are present
       paymentObj.amount = paymentObj.amount / 100;
       paymentObj.isDownloaded = p.isDownloaded || false;
       paymentObj.downloadExpiry = p.downloadExpiry || null;
       paymentObj.serverTime = new Date();
-      
+
       return paymentObj;
     })
   );

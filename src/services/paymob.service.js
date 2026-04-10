@@ -153,8 +153,11 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
     const order_id = await registerOrder(auth_token, amount_cents, currency);
     const payment_key = await getPaymentKey(auth_token, order_id, amount_cents, currency, userData);
 
-    // If phone is provided, we use the Wallet Flow (No Iframe needed)
-    if (userData.phone && userData.phone.length >= 10 && userData.phone !== '00000000000') {
+    // 🏦 Choose between Wallet flow and Card flow
+    const isWalletPreferred = userData.paymentMethod === 'wallet';
+    const hasPhone = userData.phone && userData.phone.length >= 10 && userData.phone !== '00000000000';
+
+    if (isWalletPreferred && hasPhone) {
       const cleanPhone = userData.phone.replace(/\s/g, '').replace('+2', ''); // Clean phone
       console.log(`📱 [Paymob] Attempting Wallet Flow for: ${cleanPhone}`);
       

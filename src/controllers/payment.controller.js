@@ -4,18 +4,18 @@ import { env } from '../config/env.js';
 
 export const createIntent = async (req, res, next) => {
   try {
-    const { bookId, quantity, currency, provider, phone } = req.body;
-    const result = await paymentService.createPayment(bookId, provider, quantity, currency, req.user.id, phone);
-    
+    const { bookId, quantity, currency, provider, phone, paymentMethod } = req.body;
+    const result = await paymentService.createPayment(bookId, provider, quantity, currency, req.user.id, phone, paymentMethod);
+
     // المسار الجديد لصفحة حالة الدفع
     const redirectionUrl = `${env.FRONTEND_URL}/payment-status`;
-    
-    res.status(201).json({ 
-      status: 'success', 
-      data: { 
+
+    res.status(201).json({
+      status: 'success',
+      data: {
         ...result,
-        redirectionUrl 
-      } 
+        redirectionUrl
+      }
     });
   } catch (err) {
     next(err);
@@ -115,8 +115,8 @@ export const getMyPurchases = async (req, res, next) => {
   try {
     const query = { user: req.user.id, status: 'succeeded' };
     const payments = await paymentService.getPayments(query);
-    res.status(200).json({ 
-      status: 'success', 
+    res.status(200).json({
+      status: 'success',
       data: payments,
       serverTime: new Date()
     });
@@ -139,7 +139,7 @@ export const getAll = async (req, res, next) => {
     const query = {};
     if (req.query.status) query.status = req.query.status;
     if (req.query.provider) query.provider = req.query.provider;
-    
+
     const payments = await paymentService.getPayments(query);
     res.status(200).json({ status: 'success', data: payments });
   } catch (err) {
