@@ -159,44 +159,51 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
     const order_id = await registerOrder(auth_token, amount_cents, currency);
     const payment_key = await getPaymentKey(auth_token, order_id, amount_cents, currency, userData);
 
-    // 🏦 Choose between Wallet flow and Card flow
-    const isWalletPreferred = userData.paymentMethod === 'wallet';
-    const hasPhone = userData.phone && userData.phone.length >= 10 && userData.phone !== '00000000000';
+    // 🏦 Wallet Flow
+    if (userData.paymentMethod === 'wallet') {
+      const phone = userData.phone || '';
+      const cleanPhone = phone.replace(/\s/g, '').replace(/^\+2/, '');
 
-    if (isWalletPreferred && hasPhone) {
-      const cleanPhone = userData.phone.replace(/\s/g, '').replace('+2', ''); // Clean phone
-      console.log(`📱 [Paymob] Attempting Wallet Flow for: ${cleanPhone}`);
-      
-      try {
-        const walletUrl = await payWithWallet(payment_key, cleanPhone);
-        if (walletUrl) {
-          return {
-            link: walletUrl,
-            orderId: order_id
-          };
-        }
-      } catch (walletErr) {
-        const errMsg = walletErr.response?.data?.message || walletErr.message;
-        console.warn('⚠️ [Paymob] Wallet Flow failed. Reason:', errMsg);
-        console.log('🔄 [Paymob] Falling back to standard Iframe flow.');
+      if (!cleanPhone || cleanPhone.length < 10) {
+        throw new Error('رقم المحفظة غير صالح. يرجى إدخال رقم هاتف مصري صحيح (10 أرقام على الأقل).');
       }
+
+      console.log(`📱 [Paymob] Attempting Wallet Flow for: ${cleanPhone}`);
+
+      // ❌ No silent fallback: if wallet fails, we throw so the user knows
+      const walletUrl = await payWithWallet(payment_key, cleanPhone);
+
+      if (!walletUrl) {
+        throw new Error('لم يتم استلام رابط المحفظة من باي موب. تحقق من integration_id المحفظة.');
+      }
+
+      console.log('✅ [Paymob] Wallet URL received successfully.');
+      return {
+        link: walletUrl,
+        orderId: order_id,
+        paymentMethodUsed: 'wallet',
+      };
     }
 
-    // Default: Card Iframe Flow
+    // 💳 Card Iframe Flow
     const iframeLink = `https://accept.paymob.com/api/acceptance/iframes/${env.PAYMOB_IFRAME_ID}?payment_token=${payment_key}`;
-    console.log('🌐 [Paymob] Returning Card Iframe link');
-    
+    console.log('🌐 [Paymob] Returning Card Iframe link.');
+
     return {
       link: iframeLink,
-      orderId: order_id
+      orderId: order_id,
+      paymentMethodUsed: 'card',
     };
   } catch (err) {
     const errorBody = err.response?.data;
     console.error('🚨 [Paymob Critical Error]:', JSON.stringify(errorBody || err.message));
-    
+
+    // If it's already a clean Error (thrown above), re-throw it as-is
+    if (!errorBody) throw err;
+
     const detail = typeof errorBody === 'object'
       ? (errorBody.message || errorBody.detail || errorBody.error_message || JSON.stringify(errorBody))
-      : String(errorBody || err.message);
+      : String(errorBody);
 
     throw new Error(`Paymob: ${detail}`);
   }
