@@ -103,7 +103,19 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
     ? env.PAYMOB_WALLET_INTEGRATION_ID
     : env.PAYMOB_CARD_INTEGRATION_ID;
 
-  console.log(`🔑 [Paymob] Requesting Payment Key for ${userData.paymentMethod} using integration: ${integrationId}`);
+  const parsedIntegrationId = Number(integrationId);
+
+  // Guard: catch misconfigured env vars BEFORE calling Paymob
+  if (!parsedIntegrationId || isNaN(parsedIntegrationId)) {
+    throw new Error(
+      `[Paymob Config] integration_id is invalid ("${integrationId}") for method "${userData.paymentMethod}". ` +
+      `Check PAYMOB_CARD_INTEGRATION_ID / PAYMOB_WALLET_INTEGRATION_ID in your .env — remove any surrounding quotes or spaces.`
+    );
+  }
+
+  console.log(`🔑 [Paymob] Requesting Payment Key for "${userData.paymentMethod}" using integration_id: ${parsedIntegrationId}`);
+
+  const phone = (userData.phone || '01000000000').replace(/\s/g, '').replace(/^\+2/, '');
 
   const response = await axios.post(`${PAYMOB_BASE_URL}/acceptance/payment_keys`, {
     auth_token: token,
@@ -114,20 +126,20 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
       apartment: 'NA',
       email: userData.email,
       floor: 'NA',
-      first_name: firstName,
+      first_name: firstName || 'Customer',
       street: 'NA',
       building: 'NA',
-      phone_number: userData.phone || '01000000000',
+      phone_number: phone,
       shipping_method: 'NA',
       postal_code: 'NA',
       city: 'NA',
-      country: 'NA',
+      country: 'EG',
       last_name: lastName,
       state: 'NA',
     },
     currency,
     redirection_url: `${env.FRONTEND_URL}/payment-status`,
-    integration_id: Number(integrationId),
+    integration_id: parsedIntegrationId,
   });
   return response.data.token;
 };
