@@ -138,7 +138,7 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
       state: 'NA',
     },
     currency,
-    redirection_url: `${env.FRONTEND_URL}/payment-status`,
+    redirection_url: `${env.BACKEND_URL}/api/v1/payments/paymob-callback`,
     integration_id: parsedIntegrationId,
   });
   return response.data.token;

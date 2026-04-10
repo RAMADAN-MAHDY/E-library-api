@@ -24,6 +24,7 @@ const required = [
   'PAYMOB_CARD_INTEGRATION_ID',
   'PAYMOB_WALLET_INTEGRATION_ID',
   'PAYMOB_HMAC_SECRET',
+  'BACKEND_URL',
 ];
 
 for (const key of required) {
@@ -62,4 +63,5 @@ export const env = {
 
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
   FRONTEND_URL: (process.env.FRONTEND_URL || 'http://localhost:3000').trim(),
+  BACKEND_URL: (process.env.BACKEND_URL || 'http://localhost:5000').trim(),
 };
