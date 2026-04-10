@@ -28,30 +28,43 @@ if (env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// ─── Body Parsing ─────────────────────────────────────────────────────────────
+// ─── Body Parsing ────────────────────────────────────────────────────────
 // We need the raw body for Stripe webhook signature verification
+// Set 50MB limit for file uploads
 app.use(express.json({
+  limit: '50mb',
   verify: (req, res, buf) => {
     if (req.originalUrl.includes('/webhook')) {
       req.rawBody = buf;
     }
   } 
 }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ─── Error Handler for Payload Too Large ─────────────────────────────────
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return res.status(413).json({ 
+      status: 'error',
+      message: 'The maximum file size allowed is 50MB' 
+    });
+  }
+  next(err);
+});
 
 // ─── Global Rate Limiter ─────────────────────────────────────────────────────
 app.use(passport.initialize());
 app.use(globalLimiter);
 
-// ─── Routes ──────────────────────────────────────────────────────────────────
+// ─── Routes ──────────────────────────────────────────────────────────
 app.use('/api/v1', router);
 
-// ─── Health Check ────────────────────────────────────────────────────────────
+// ─── Health Check ────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ─── 404 Handler ─────────────────────────────────────────────────────────────
+// ─── 404 Handler ─────────────────────────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({ status: 'error', message: 'Route not found' });
 });
