@@ -206,7 +206,7 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
     book: payment.book ? {
       id: payment.book._id,
       title: payment.book.title,
-      price: payment.book.price,
+      price: payment.book.price / 100,
       coverUrl: result.url
     } : null,
     createdAt: paymentObj.createdAt,
@@ -257,6 +257,7 @@ export const getPayments = async (query = {}) => {
       if (paymentObj.book) {
         const result = await getCoverImageUrl(paymentObj.book._id);
         paymentObj.book.id = paymentObj.book._id;
+        paymentObj.book.price = paymentObj.book.price / 100;
         paymentObj.book.coverUrl = result.url;
       }
       

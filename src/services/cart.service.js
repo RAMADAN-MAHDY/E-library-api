@@ -26,13 +26,22 @@ const resolveCartData = async (cartDoc) => {
           // Use discount price if on sale
           const currentPrice = (book.isOnSale && book.discountPrice) ? book.discountPrice : (book.price || 0);
           calculatedTotal += (currentPrice * item.quantity);
+
+          // Convert book prices to main unit for output
+          book.price = book.price / 100;
+          if (book.discountPrice !== null) {
+            book.discountPrice = book.discountPrice / 100;
+          }
+
+          // Convert priceAtAdd as well
+          item.priceAtAdd = item.priceAtAdd / 100;
         }
         return item;
       })
     );
   }
   
-  cartObj.total = calculatedTotal; // Override the virtual total with our accurate calculation
+  cartObj.total = calculatedTotal / 100; // Divide total by 100 for main unit
   return cartObj;
 };
 

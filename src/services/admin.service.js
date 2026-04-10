@@ -25,13 +25,13 @@ export const getDashboardSummary = async () => {
   ]);
 
   return {
-    totalRevenue: revenue[0]?.total || 0,
+    totalRevenue: (revenue[0]?.total || 0) / 100,
     totalUsers,
     totalFiles,
     recentSales: lastSales.map(s => ({
       userName: s.user?.name,
       bookTitle: s.book?.title,
-      amount: s.amount,
+      amount: s.amount / 100,
       date: s.createdAt
     }))
   };
@@ -107,9 +107,20 @@ export const getRevenueStats = async () => {
   ]);
 
   return {
-    summary: overall[0] || { total: 0, count: 0 },
-    monthly: monthly.map(m => ({ month: m._id.month, total: m.total, count: m.count })),
-    daily: daily.map(d => ({ date: d._id, total: d.total, count: d.count }))
+    summary: { 
+      total: (overall[0]?.total || 0) / 100, 
+      count: overall[0]?.count || 0 
+    },
+    monthly: monthly.map(m => ({ 
+      month: m._id.month, 
+      total: m.total / 100, 
+      count: m.count 
+    })),
+    daily: daily.map(d => ({ 
+      date: d._id, 
+      total: d.total / 100, 
+      count: d.count 
+    }))
   };
 };
 
@@ -135,9 +146,9 @@ export const getTopSellingBooks = async (limit = 10) => {
       $project: {
         _id: 1,
         salesCount: 1,
-        revenue: 1,
+        revenue: { $divide: ['$revenue', 100] },
         title: '$bookDetails.title',
-        price: '$bookDetails.price'
+        price: { $divide: ['$bookDetails.price', 100] }
       }
     }
   ]);
@@ -180,7 +191,11 @@ export const getAdvancedBIStats = async () => {
         }
       },
       { $unwind: '$catName' },
-      { $project: { category: '$catName.name', totalRevenue: 1, booksSold: 1 } },
+      { $project: { 
+        category: '$catName.name', 
+        totalRevenue: { $divide: ['$totalRevenue', 100] }, 
+        booksSold: 1 
+      } },
       { $sort: { totalRevenue: -1 } }
     ]),
     // 2. Average Order Value (AOV)
@@ -197,11 +212,17 @@ export const getAdvancedBIStats = async () => {
     ]),
     // 3. Stagnant Books (Files created >30 days ago with 0 sales)
     // First get all sold book IDs
-    Payment.distinct('book', { status: 'succeeded' }).then(soldIds => {
-      return File.find({
+    Payment.distinct('book', { status: 'succeeded' }).then(async (soldIds) => {
+      const files = await File.find({
         _id: { $nin: soldIds },
         createdAt: { $lt: thirtyDaysAgo }
       }).limit(10).select('title createdAt price');
+      
+      return files.map(f => ({
+        ...f.toObject(),
+        id: f._id,
+        price: f.price / 100
+      }));
     }),
     // 4. Signup Methods (Google vs Local)
     User.aggregate([
@@ -219,8 +240,8 @@ export const getAdvancedBIStats = async () => {
   return {
     categoryPerformance: categoryStats,
     aov: {
-      averageCents: Math.round(aov[0]?.avg || 0),
-      totalRevenueCents: aov[0]?.totalRev || 0,
+      average: (aov[0]?.avg || 0) / 100,
+      totalRevenue: (aov[0]?.totalRev || 0) / 100,
       orderCount: aov[0]?.count || 0
     },
     stagnantBooks: stagnant,
