@@ -135,8 +135,8 @@ const fetchBooks = async () => {
   "data": {
     "id": "65f...",
     "title": "...",
-    "price": 100,
-    "discountPrice": 80,
+    "price": 100.00,
+    "discountPrice": 80.50,
     "isOnSale": true,
     "coverUrl": "...",
     "size": 102450, // حجم الملف بالبايت
@@ -199,7 +199,7 @@ const fetchBooks = async () => {
         "priceAtAdd": 100
       }
     ],
-    "total": 100
+    "total": 100.00
   }
 }
 ```
@@ -312,7 +312,7 @@ const handlePurchase = async (bookId, method = 'stripe') => {
     "book": {
       "id": "65f...",
       "title": "اسم الكتاب",
-      "price": 1000,
+      "price": 10.00,
       "coverUrl": "https://..."
     },
     "createdAt": "..."
@@ -336,7 +336,7 @@ const handlePurchase = async (bookId, method = 'stripe') => {
       "book": { 
         "id": "...", 
         "title": "...", 
-        "price": 1000,
+        "price": 10.00,
         "coverUrl": "..." 
       }
     }

@@ -14,15 +14,13 @@ export const uploadMetaSchema = Joi.object({
     'string.max': 'الوصف لا يمكن أن يتجاوز 1000 حرف.'
   }),
 
-  price: Joi.number().integer().min(0).required().messages({
+  price: Joi.number().min(0).required().messages({
     'number.base': 'السعر يجب أن يكون رقماً.',
-    'number.integer': 'السعر يجب أن يكون رقماً صحيحاً.',
     'number.min': 'السعر لا يمكن أن يكون أقل من 0.',
     'any.required': 'السعر إلزامي.'
   }),
 
   discountPrice: Joi.number()
-    .integer()
     .min(0)
     .less(Joi.ref('price'))
     .when('isOnSale', {
@@ -32,7 +30,6 @@ export const uploadMetaSchema = Joi.object({
     })
     .messages({
       'number.base': 'سعر الخصم يجب أن يكون رقماً.',
-      'number.integer': 'سعر الخصم يجب أن يكون رقماً صحيحاً.',
       'number.min': 'سعر الخصم لا يمكن أن يكون أقل من 0.',
       'number.less': 'سعر الخصم يجب أن يكون أقل من السعر الأساسي.',
       'any.required': 'يجب تحديد سعر الخصم عند تفعيل التخفيض.'
@@ -64,14 +61,12 @@ export const updateFileSchema = Joi.object({
   description: Joi.string().max(1000).optional().allow('').messages({
     'string.max': 'الوصف لا يمكن أن يتجاوز 1000 حرف.'
   }),
-  price: Joi.number().integer().min(0).optional().messages({
+  price: Joi.number().min(0).optional().messages({
     'number.base': 'السعر يجب أن يكون رقماً.',
-    'number.integer': 'السعر يجب أن يكون رقماً صحيحاً.',
     'number.min': 'السعر لا يمكن أن يكون أقل من 0.'
   }),
-  discountPrice: Joi.number().integer().min(0).optional().allow(null).messages({
+  discountPrice: Joi.number().min(0).optional().allow(null).messages({
     'number.base': 'سعر الخصم يجب أن يكون رقماً.',
-    'number.integer': 'سعر الخصم يجب أن يكون رقماً صحيحاً.',
     'number.min': 'سعر الخصم لا يمكن أن يكون أقل من 0.'
   }),
   isOnSale: Joi.boolean().optional().messages({

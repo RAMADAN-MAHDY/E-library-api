@@ -18,8 +18,8 @@
 *   **البيانات المطلوبة (FormData)**:
     *   `title`: `string` (مطلوب) - عنوان الكتاب.
     *   `description`: `string` (اختياري) - وصف موجز للكتاب.
-    *   `price`: `number` (مطلوب) - سعر الكتاب بالسنت (مثلاً 12000 تعني 120 دولار).
-    *   `discountPrice`: `number` (اختياري) - السعر المخفض للكتاب بالسنت.
+    *   `price`: `number` (مطلوب) - سعر الكتاب بالوحدة الرئيسية (مثلاً 12.50 تعني 12 دولار ونصف).
+    *   `discountPrice`: `number` (اختياري) - السعر المخفض للكتاب بالوحدة الرئيسية.
     *   `isOnSale`: `boolean` (اختياري) - لتحديد ما إذا كان الكتاب معروضًا للبيع بخصم (`true`/`false`).
     *   `category`: `string` (مطلوب) - `_id` الخاص بالمجال الذي ينتمي إليه الكتاب.
     *   `productType`: `string` (مطلوب) - `_id` الخاص بنوع المنتج (مثل كتاب، تقرير).
@@ -120,9 +120,9 @@
     // مثال تجهيز الـ FormData:
     // const fd = new FormData();
     // fd.append('title', 'كتاب الفكر السياسي الجديد');
-    // fd.append('price', 15000);
+    // fd.append('price', 150.00);
     // fd.append('isOnSale', 'true');
-    // fd.append('discountPrice', 10000);
+    // fd.append('discountPrice', 100.50);
     // fd.append('category', '69ce...');
     // fd.append('productType', '69ce...');
     // fd.append('file', pdfFile); // pdfFile هو كائن File
@@ -138,8 +138,8 @@
 *   **البيانات المطلوبة (Request Body - يمكن أن تكون JSON أو FormData)**:
     *   `title`: `string` (اختياري) - عنوان الكتاب الجديد.
     *   `description`: `string` (اختياري) - وصف الكتاب الجديد.
-    *   `price`: `number` (اختياري) - سعر الكتاب الجديد بالسنت.
-    *   `discountPrice`: `number` (اختياري) - السعر المخفض الجديد.
+    *   `price`: `number` (اختياري) - سعر الكتاب الجديد بالوحدة الرئيسية.
+    *   `discountPrice`: `number` (اختياري) - السعر المخفض الجديد بالوحدة الرئيسية.
     *   `isOnSale`: `boolean` (اختياري) - حالة العرض الجديدة.
     *   `category`: `string` (اختياري) - `_id` المجال الجديد.
     *   `productType`: `string` (اختياري) - `_id` النوع الجديد.
@@ -237,7 +237,7 @@
     };
 
     // مثال للاستخدام:
-    // updateBookJson('bookId123', { title: 'عنوان جديد', price: 20000 }, 'your_admin_jwt_token');
+    // updateBookJson('bookId123', { title: 'عنوان جديد', price: 200.50 }, 'your_admin_jwt_token');
     // const fdUpdate = new FormData();
     // fdUpdate.append('cover', newCoverImageFile);
     // updateBookFormData('bookId123', fdUpdate, 'your_admin_jwt_token');
