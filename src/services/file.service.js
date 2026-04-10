@@ -73,9 +73,9 @@ export const uploadFile = async (fileObj, coverObj, meta, user) => {
     title: meta.title,
     originalName: fileObj.originalname,
     description: meta.description || '',
-    price: meta.price ?? 0,
-    discountPrice: meta.discountPrice,
-    isOnSale: meta.isOnSale,
+    price: (meta.price ? Number(meta.price) * 100 : 0),
+    discountPrice: (meta.discountPrice ? Number(meta.discountPrice) * 100 : null),
+    isOnSale: meta.isOnSale === 'true' || meta.isOnSale === true,
     category: meta.category,
     productType: meta.productType,
     r2Key,
@@ -132,8 +132,8 @@ export const updateFile = async (fileId, user, updates, fileObj = null, coverObj
   // 3. Metadata
   if (updates.title !== undefined) file.title = updates.title;
   if (updates.description !== undefined) file.description = updates.description;
-  if (updates.price !== undefined) file.price = Number(updates.price);
-  if (updates.discountPrice !== undefined) file.discountPrice = updates.discountPrice ? Number(updates.discountPrice) : null;
+  if (updates.price !== undefined) file.price = Math.round(Number(updates.price) * 100);
+  if (updates.discountPrice !== undefined) file.discountPrice = updates.discountPrice ? Math.round(Number(updates.discountPrice) * 100) : null;
   if (updates.isOnSale !== undefined) file.isOnSale = updates.isOnSale === 'true' || updates.isOnSale === true;
   if (updates.category !== undefined) file.category = updates.category;
   if (updates.productType !== undefined) file.productType = updates.productType;
@@ -243,8 +243,8 @@ export const getFileById = async (fileId) => {
     id: file._id,
     title: file.title,
     description: file.description,
-    price: file.price,
-    discountPrice: file.discountPrice,
+    price: file.price / 100,
+    discountPrice: file.discountPrice !== null ? file.discountPrice / 100 : null,
     isOnSale: file.isOnSale,
     coverUrl,
     category: file.category,
@@ -319,8 +319,8 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
         id: f._id,
         title: f.title,
         description: f.description,
-        price: f.price,
-        discountPrice: f.discountPrice,
+        price: f.price / 100,
+        discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
         isOnSale: f.isOnSale,
         coverUrl,
         category: f.category,
@@ -362,7 +362,14 @@ export const getTrendingFiles = async (limit = 10) => {
   
   return await Promise.all(orderedFiles.map(async (f) => {
     const result = await getCoverImageUrl(f._id);
-    return { ...f.toObject(), id: f._id, coverUrl: result.url };
+    const fileObj = f.toObject();
+    return { 
+      ...fileObj, 
+      id: f._id, 
+      price: fileObj.price / 100,
+      discountPrice: fileObj.discountPrice !== null ? fileObj.discountPrice / 100 : null,
+      coverUrl: result.url 
+    };
   }));
 };
 
@@ -384,6 +391,13 @@ export const getPopularFiles = async (limit = 10) => {
 
   return await Promise.all(orderedFiles.map(async (f) => {
     const result = await getCoverImageUrl(f._id);
-    return { ...f.toObject(), id: f._id, coverUrl: result.url };
+    const fileObj = f.toObject();
+    return { 
+      ...fileObj, 
+      id: f._id, 
+      price: fileObj.price / 100,
+      discountPrice: fileObj.discountPrice !== null ? fileObj.discountPrice / 100 : null,
+      coverUrl: result.url 
+    };
   }));
 };
