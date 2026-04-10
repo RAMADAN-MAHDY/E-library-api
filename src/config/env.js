@@ -55,9 +55,9 @@ export const env = {
   GOOGLE_CLIENT_SECRET: (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
 
   PAYMOB_API_KEY: (process.env.PAYMOB_API_KEY || '').trim(),
-  PAYMOB_IFRAME_ID: (process.env.PAYMOB_IFRAME_ID || '').trim(),
-  PAYMOB_CARD_INTEGRATION_ID: (process.env.PAYMOB_CARD_INTEGRATION_ID || '').trim(),
-  PAYMOB_WALLET_INTEGRATION_ID: (process.env.PAYMOB_WALLET_INTEGRATION_ID || '').trim(),
+  PAYMOB_IFRAME_ID: (process.env.PAYMOB_IFRAME_ID || '').trim().replace(/^"|"$/g, ''),
+  PAYMOB_CARD_INTEGRATION_ID: (process.env.PAYMOB_CARD_INTEGRATION_ID || '').trim().replace(/^"|"$/g, ''),
+  PAYMOB_WALLET_INTEGRATION_ID: (process.env.PAYMOB_WALLET_INTEGRATION_ID || '').trim().replace(/^"|"$/g, ''),
   PAYMOB_HMAC_SECRET: (process.env.PAYMOB_HMAC_SECRET || '').trim(),
 
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
