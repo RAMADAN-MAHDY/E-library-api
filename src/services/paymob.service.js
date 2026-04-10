@@ -99,6 +99,12 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
   const [firstName, ...lastNameParts] = userData.name.split(' ');
   const lastName = lastNameParts.join(' ') || 'User';
 
+  const integrationId = userData.paymentMethod === 'wallet'
+    ? env.PAYMOB_WALLET_INTEGRATION_ID
+    : env.PAYMOB_CARD_INTEGRATION_ID;
+
+  console.log(`🔑 [Paymob] Requesting Payment Key for ${userData.paymentMethod} using integration: ${integrationId}`);
+
   const response = await axios.post(`${PAYMOB_BASE_URL}/acceptance/payment_keys`, {
     auth_token: token,
     amount_cents: String(amount_cents),
@@ -111,7 +117,7 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
       first_name: firstName,
       street: 'NA',
       building: 'NA',
-      phone_number: userData.phone || '00000000000',
+      phone_number: userData.phone || '01000000000',
       shipping_method: 'NA',
       postal_code: 'NA',
       city: 'NA',
@@ -121,7 +127,7 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
     },
     currency,
     redirection_url: `${env.FRONTEND_URL}/payment-status`,
-    integration_id: Number(env.PAYMOB_INTEGRATION_ID),
+    integration_id: Number(integrationId),
   });
   return response.data.token;
 };
@@ -177,8 +183,11 @@ export const createPaymentLink = async (amount_cents, currency, userData) => {
     }
 
     // Default: Card Iframe Flow
+    const iframeLink = `https://accept.paymob.com/api/acceptance/iframes/${env.PAYMOB_IFRAME_ID}?payment_token=${payment_key}`;
+    console.log('🌐 [Paymob] Returning Card Iframe link');
+    
     return {
-      link: `https://accept.paymob.com/api/acceptance/iframes/${env.PAYMOB_IFRAME_ID}?payment_token=${payment_key}`,
+      link: iframeLink,
       orderId: order_id
     };
   } catch (err) {
