@@ -20,7 +20,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5174'],
+  origin: ['http://localhost:3000', 'http://localhost:5174','https://aldawlia-publishing.vercel.app'],
   credentials: true,
 }));
 
