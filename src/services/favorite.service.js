@@ -10,7 +10,7 @@ const resolveFileUrls = async (files) => {
     files.map(async (file) => {
       let coverUrl = null;
       if (file.coverImageKey) {
-        const result = await getCoverImageUrl(file._id);
+        const result = await getCoverImageUrl(file);
         coverUrl = result.url;
       }
       

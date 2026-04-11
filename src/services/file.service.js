@@ -54,7 +54,7 @@ const removeFromR2 = async (key) => {
 export const uploadFile = async (fileObj, coverObj, meta, user) => {
   const ownerId = user.id || user._id;
   console.log(`📡 [R2 DEBUG] Using bucket: [${env.R2_BUCKET_NAME}]`);
-  
+
   // ── Main file ──
   const ext = fileObj.originalname.split('.').pop();
   const r2Key = `uploads/${ownerId}/${randomUUID()}.${ext}`;
@@ -174,7 +174,7 @@ export const getDownloadLink = async (fileId, user) => {
       err.statusCode = 403;
       throw err;
     }
-    
+
     // Mark as downloaded if it's the first time
     if (!payment.isDownloaded) {
       console.log(`📝 [DOWNLOAD TRACKER] Marking book ${fileId} as downloaded for user ${requesterId}`);
@@ -188,9 +188,9 @@ export const getDownloadLink = async (fileId, user) => {
   }
 
   const url = await buildPresignedUrl(file.r2Key, file.originalName, env.DOWNLOAD_LINK_EXPIRY_SECONDS);
-  
-  return { 
-    url, 
+
+  return {
+    url,
     expiresIn: env.DOWNLOAD_LINK_EXPIRY_SECONDS,
     expiresAt: payment?.downloadExpiry || new Date(Date.now() + env.DOWNLOAD_LINK_EXPIRY_SECONDS * 1000),
     serverTime: new Date(),
@@ -202,9 +202,17 @@ export const getDownloadLink = async (fileId, user) => {
  * Returns the URL for a cover image. 
  * If R2_PUBLIC_URL is set, it returns a permanent public link.
  * Otherwise, it falls back to a long-lived signed URL (24 hours).
+ *
+ * Optimization: Pass the full file document/object to avoid extra DB query (N+1 fix).
  */
-export const getCoverImageUrl = async (fileId) => {
-  const file = await File.findById(fileId);
+export const getCoverImageUrl = async (fileOrId) => {
+  let file;
+  if (typeof fileOrId === 'object' && fileOrId !== null) {
+    file = fileOrId;
+  } else {
+    file = await File.findById(fileOrId);
+  }
+
   if (!file || !file.coverImageKey) {
     return { url: null };
   }
@@ -235,7 +243,7 @@ export const getFileById = async (fileId) => {
   // Resolve cover URL
   let coverUrl = null;
   if (file.coverImageKey) {
-    const result = await getCoverImageUrl(file._id);
+    const result = await getCoverImageUrl(file);
     coverUrl = result.url;
   }
 
@@ -311,10 +319,10 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
     files.map(async (f) => {
       let coverUrl = null;
       if (f.coverImageKey) {
-        const result = await getCoverImageUrl(f._id);
+        const result = await getCoverImageUrl(f);
         coverUrl = result.url;
       }
-      
+
       return {
         id: f._id,
         title: f.title,
@@ -356,19 +364,19 @@ export const getTrendingFiles = async (limit = 10) => {
 
   const fileIds = trending.map(t => t._id);
   const files = await File.find({ _id: { $in: fileIds } }).populate(['category', 'productType']);
-  
+
   // Maintain order
   const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
-  
+
   return await Promise.all(orderedFiles.map(async (f) => {
-    const result = await getCoverImageUrl(f._id);
+    const result = await getCoverImageUrl(f);
     const fileObj = f.toObject();
-    return { 
-      ...fileObj, 
-      id: f._id, 
+    return {
+      ...fileObj,
+      id: f._id,
       price: fileObj.price / 100,
       discountPrice: fileObj.discountPrice !== null ? fileObj.discountPrice / 100 : null,
-      coverUrl: result.url 
+      coverUrl: result.url
     };
   }));
 };
@@ -386,18 +394,18 @@ export const getPopularFiles = async (limit = 10) => {
 
   const fileIds = popular.map(p => p._id);
   const files = await File.find({ _id: { $in: fileIds } }).populate(['category', 'productType']);
-  
+
   const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
 
   return await Promise.all(orderedFiles.map(async (f) => {
-    const result = await getCoverImageUrl(f._id);
+    const result = await getCoverImageUrl(f);
     const fileObj = f.toObject();
-    return { 
-      ...fileObj, 
-      id: f._id, 
+    return {
+      ...fileObj,
+      id: f._id,
       price: fileObj.price / 100,
       discountPrice: fileObj.discountPrice !== null ? fileObj.discountPrice / 100 : null,
-      coverUrl: result.url 
+      coverUrl: result.url
     };
   }));
 };

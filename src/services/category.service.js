@@ -37,8 +37,17 @@ const removeFromR2 = async (key) => {
   );
 };
 
-export const getCategoryCoverUrl = async (categoryId) => {
-  const category = await Category.findById(categoryId);
+/**
+ * Optimization: Pass full category object to avoid extra DB query (N+1 fix)
+ */
+export const getCategoryCoverUrl = async (categoryOrId) => {
+  let category;
+  if (typeof categoryOrId === 'object' && categoryOrId !== null) {
+    category = categoryOrId;
+  } else {
+    category = await Category.findById(categoryOrId);
+  }
+
   if (!category || !category.coverImageKey) {
     return { url: null };
   }
@@ -68,7 +77,7 @@ export const createCategory = async (data, coverObj = null) => {
   // Format response
   let coverUrl = null;
   if (coverImageKey) {
-    const result = await getCategoryCoverUrl(category._id);
+    const result = await getCategoryCoverUrl(category);
     coverUrl = result.url;
   }
   
@@ -81,7 +90,7 @@ export const getCategories = async (query = {}) => {
   return await Promise.all(categories.map(async (c) => {
     let coverUrl = null;
     if (c.coverImageKey) {
-      const result = await getCategoryCoverUrl(c._id);
+      const result = await getCategoryCoverUrl(c);
       coverUrl = result.url;
     }
     return { ...c.toObject(), coverUrl };
@@ -94,7 +103,7 @@ export const getCategoryById = async (id) => {
   
   let coverUrl = null;
   if (category.coverImageKey) {
-    const result = await getCategoryCoverUrl(category._id);
+    const result = await getCategoryCoverUrl(category);
     coverUrl = result.url;
   }
   return { ...category.toObject(), coverUrl };

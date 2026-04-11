@@ -196,7 +196,7 @@ export const getPaymentByTransactionId = async (transactionId, userId) => {
   }
 
   const paymentObj = payment.toObject();
-  const result = await getCoverImageUrl(payment.book?._id);
+  const result = await getCoverImageUrl(payment.book);
 
   // Format based on the requested structure
   return {
