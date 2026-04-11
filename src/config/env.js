@@ -64,4 +64,10 @@ export const env = {
   DOWNLOAD_LINK_EXPIRY_SECONDS: Number(process.env.DOWNLOAD_LINK_EXPIRY_SECONDS) || 300,
   FRONTEND_URL: (process.env.FRONTEND_URL || 'http://localhost:3000').trim(),
   BACKEND_URL: (process.env.BACKEND_URL || 'http://localhost:5000').trim(),
+
+  // ─── Timeouts (in milliseconds) ───
+  TIMEOUT_EXTERNAL_API: Number(process.env.TIMEOUT_EXTERNAL_API) || 30000, // 30s
+  TIMEOUT_DB: Number(process.env.TIMEOUT_DB) || 10000,           // 10s
+  TIMEOUT_FILES: Number(process.env.TIMEOUT_FILES) || 60000,    // 60s
+  TIMEOUT_AUTH: Number(process.env.TIMEOUT_AUTH) || 5000,       // 5s
 };

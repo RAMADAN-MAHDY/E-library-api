@@ -8,8 +8,14 @@ const PORT = env.PORT;
 
 // console.log('MONGO_URI:', env.MONGO_URI);
 
+const mongooseOptions = {
+  serverSelectionTimeoutMS: env.TIMEOUT_DB, // How long to wait for server selection
+  socketTimeoutMS: 45000,                  // Close sockets after 45s of inactivity
+  connectTimeoutMS: env.TIMEOUT_DB,        // How long to wait for initial connection
+};
+
 mongoose
-  .connect(env.MONGO_URI)
+  .connect(env.MONGO_URI, mongooseOptions)
   .then(() => {
     console.log('✅  MongoDB connected');
     app.listen(PORT, () => {

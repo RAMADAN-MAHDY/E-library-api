@@ -65,6 +65,8 @@ export const verifyPaymobHMAC = (query) => {
 const authenticate = async () => {
   const response = await axios.post(`${PAYMOB_BASE_URL}/auth/tokens`, {
     api_key: env.PAYMOB_API_KEY,
+  }, {
+    timeout: env.TIMEOUT_EXTERNAL_API
   });
   return response.data.token;
 };
@@ -83,6 +85,8 @@ const registerOrder = async (token, amount_cents, currency) => {
     amount_cents: String(amount_cents),
     currency,
     items: [],
+  }, {
+    timeout: env.TIMEOUT_EXTERNAL_API
   });
   return response.data.id;
 };
@@ -140,6 +144,8 @@ const getPaymentKey = async (token, order_id, amount_cents, currency, userData) 
     currency,
     redirection_url: `${env.BACKEND_URL}/api/v1/payments/paymob-callback`,
     integration_id: parsedIntegrationId,
+  }, {
+    timeout: env.TIMEOUT_EXTERNAL_API
   });
   return response.data.token;
 };
