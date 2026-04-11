@@ -7,8 +7,21 @@ import { env } from '../config/env.js';
  */
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, _req, res, _next) => {
-  const statusCode = err.statusCode || err.status || 500;
-  const message = err.message || 'Internal Server Error';
+  let statusCode = err.statusCode || err.status || 500;
+  let message = err.message || 'Internal Server Error';
+
+  // Handle Timeout Errors
+  if (err.code === 'TIMEOUT' || err.code === 'ECONNABORTED' || statusCode === 408) {
+    statusCode = 408;
+    message = 'Request Timeout: The server or an external service took too long to respond. Please try again.';
+    console.error(`🕒 [TIMEOUT ERROR] ${err.message}`);
+  }
+
+  // Handle Mongoose Timeout
+  if (err.name === 'MongooseServerSelectionError') {
+    statusCode = 503;
+    message = 'Database Timeout: Could not connect to the database in time. Please try again later.';
+  }
 
   const response = {
     status: 'error',

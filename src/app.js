@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import router from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
+import { dynamicTimeout } from './middleware/timeout.js';
 
 import passport from 'passport';
 
@@ -15,6 +16,9 @@ const app = express();
 // Trust the first proxy (e.g. ngrok, Cloudflare, Heroku)
 // Essential for express-rate-limit to get the real client IP
 app.set('trust proxy', 1);
+
+// ─── Timeout Middleware ──────────────────────────────────────────────────────
+app.use(dynamicTimeout);
 
 // ─── Security & Utility Middleware ───────────────────────────────────────────
 app.use(helmet());
