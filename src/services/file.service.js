@@ -312,7 +312,8 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
     .populate(['category', 'productType'])
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   // 3. Resolve cover URLs and build response objects
   const resolvedFiles = await Promise.all(
@@ -363,19 +364,20 @@ export const getTrendingFiles = async (limit = 10) => {
   ]);
 
   const fileIds = trending.map(t => t._id);
-  const files = await File.find({ _id: { $in: fileIds } }).populate(['category', 'productType']);
+  const files = await File.find({ _id: { $in: fileIds } })
+    .populate(['category', 'productType'])
+    .lean();
 
   // Maintain order
   const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
 
   return await Promise.all(orderedFiles.map(async (f) => {
     const result = await getCoverImageUrl(f);
-    const fileObj = f.toObject();
     return {
-      ...fileObj,
+      ...f,
       id: f._id,
-      price: fileObj.price / 100,
-      discountPrice: fileObj.discountPrice !== null ? fileObj.discountPrice / 100 : null,
+      price: f.price / 100,
+      discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
       coverUrl: result.url
     };
   }));
@@ -393,18 +395,19 @@ export const getPopularFiles = async (limit = 10) => {
   ]);
 
   const fileIds = popular.map(p => p._id);
-  const files = await File.find({ _id: { $in: fileIds } }).populate(['category', 'productType']);
+  const files = await File.find({ _id: { $in: fileIds } })
+    .populate(['category', 'productType'])
+    .lean();
 
   const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
 
   return await Promise.all(orderedFiles.map(async (f) => {
     const result = await getCoverImageUrl(f);
-    const fileObj = f.toObject();
     return {
-      ...fileObj,
+      ...f,
       id: f._id,
-      price: fileObj.price / 100,
-      discountPrice: fileObj.discountPrice !== null ? fileObj.discountPrice / 100 : null,
+      price: f.price / 100,
+      discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
       coverUrl: result.url
     };
   }));
