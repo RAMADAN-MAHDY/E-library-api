@@ -85,7 +85,7 @@ export const createCategory = async (data, coverObj = null) => {
 };
 
 export const getCategories = async (query = {}) => {
-  const categories = await Category.find(query).sort({ name: 1 });
+  const categories = await Category.find(query).sort({ name: 1 }).lean();
   
   return await Promise.all(categories.map(async (c) => {
     let coverUrl = null;
@@ -93,12 +93,12 @@ export const getCategories = async (query = {}) => {
       const result = await getCategoryCoverUrl(c);
       coverUrl = result.url;
     }
-    return { ...c.toObject(), coverUrl };
+    return { ...c, coverUrl };
   }));
 };
 
 export const getCategoryById = async (id) => {
-  const category = await Category.findById(id);
+  const category = await Category.findById(id).lean();
   if (!category) return null;
   
   let coverUrl = null;
@@ -106,7 +106,7 @@ export const getCategoryById = async (id) => {
     const result = await getCategoryCoverUrl(category);
     coverUrl = result.url;
   }
-  return { ...category.toObject(), coverUrl };
+  return { ...category, coverUrl };
 };
 
 export const updateCategory = async (id, updates, coverObj = null) => {

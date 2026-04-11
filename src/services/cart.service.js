@@ -49,9 +49,13 @@ const resolveCartData = async (cartDoc) => {
  * Get (or create) the user's cart, populated with file info.
  */
 export const getCart = async (userId) => {
-  let cart = await Cart.findOne({ user: userId }).populate('items.file', 'title originalName description coverImageKey price isOnSale discountPrice');
+  let cart = await Cart.findOne({ user: userId })
+    .populate('items.file', 'title originalName description coverImageKey price isOnSale discountPrice')
+    .lean();
+    
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
+    // Convert new cart to object if needed for consistency, though resolveCartData handles both
   }
   return await resolveCartData(cart);
 };

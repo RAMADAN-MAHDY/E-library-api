@@ -73,7 +73,7 @@ export const getFavorites = async (userId) => {
   const user = await User.findById(userId).populate({
     path: 'favorites',
     populate: ['category', 'productType']
-  });
+  }).lean();
   
   if (!user) {
     const err = new Error('User not found.');
