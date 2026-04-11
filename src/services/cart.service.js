@@ -19,7 +19,7 @@ const resolveCartData = async (cartDoc) => {
         if (book) {
           // Resolve cover URL
           if (book.coverImageKey) {
-            const result = await getCoverImageUrl(book._id || book.id);
+            const result = await getCoverImageUrl(book);
             book.coverUrl = result.url;
           }
           
