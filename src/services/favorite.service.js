@@ -47,7 +47,7 @@ export const addToFavorites = async (userId, fileId) => {
   const user = await User.findByIdAndUpdate(
     userId,
     { $addToSet: { favorites: fileId } },
-    { new: true }
+    { returnDocument: 'after' }
   ).populate(['favorites']);
 
   return await resolveFileUrls(user.favorites);
@@ -60,7 +60,7 @@ export const removeFromFavorites = async (userId, fileId) => {
   const user = await User.findByIdAndUpdate(
     userId,
     { $pull: { favorites: fileId } },
-    { new: true }
+    { returnDocument: 'after' }
   ).populate(['favorites']);
 
   return await resolveFileUrls(user.favorites);

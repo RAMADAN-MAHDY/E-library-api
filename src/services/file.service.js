@@ -78,6 +78,7 @@ export const uploadFile = async (fileObj, coverObj, meta, user) => {
     isOnSale: meta.isOnSale === 'true' || meta.isOnSale === true,
     category: meta.category,
     productType: meta.productType,
+    release_date: meta.release_date || null,
     r2Key,
     coverImageKey,
     mimeType: fileObj.mimetype,
@@ -137,6 +138,7 @@ export const updateFile = async (fileId, user, updates, fileObj = null, coverObj
   if (updates.isOnSale !== undefined) file.isOnSale = updates.isOnSale === 'true' || updates.isOnSale === true;
   if (updates.category !== undefined) file.category = updates.category;
   if (updates.productType !== undefined) file.productType = updates.productType;
+  if (updates.release_date !== undefined) file.release_date = updates.release_date || null;
 
   await file.save();
   return await file.populate(['category', 'productType']);
@@ -334,6 +336,65 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
         coverUrl,
         category: f.category,
         productType: f.productType,
+        release_date: f.release_date,
+        createdAt: f.createdAt,
+      };
+    })
+  );
+
+  return {
+    files: resolvedFiles,
+    pagination: {
+      totalResults,
+      totalPages,
+      currentPage: page,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    }
+  };
+};
+
+/**
+ * Get latest releases (Sorted by release_date DESC, excluding future dates)
+ */
+export const getLatestReleases = async (page = 1, limit = 12) => {
+  const skip = (page - 1) * limit;
+  const now = new Date();
+
+  const query = {
+    release_date: { $ne: null, $lte: now }
+  };
+
+  const totalResults = await File.countDocuments(query);
+  const totalPages = Math.ceil(totalResults / limit);
+
+  const files = await File.find(query)
+    .populate(['category', 'productType'])
+    .sort({ release_date: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const resolvedFiles = await Promise.all(
+    files.map(async (f) => {
+      let coverUrl = null;
+      if (f.coverImageKey) {
+        const result = await getCoverImageUrl(f);
+        coverUrl = result.url;
+      }
+
+      return {
+        id: f._id,
+        title: f.title,
+        description: f.description,
+        price: f.price / 100,
+        discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
+        isOnSale: f.isOnSale,
+        coverUrl,
+        category: f.category,
+        productType: f.productType,
+        release_date: f.release_date,
         createdAt: f.createdAt,
       };
     })
