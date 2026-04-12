@@ -109,6 +109,7 @@ const fetchBooks = async () => {
       "coverUrl": "https://...", // رابط الصورة
       "category": { "_id": "...", "name": "اسم المجال" },
       "productType": { "_id": "...", "name": "كتاب" },
+      "release_date": "2024-05-10T00:00:00.000Z", // تاريخ الإصدار الرسمي
       "createdAt": "2024-..."
     }
   ],
@@ -151,11 +152,65 @@ const fetchBooks = async () => {
 *   **المسار**: `GET /files/on-sale`
 *   **الوصف**: يرجع فقط الكتب التي عليها خصم حالياً (`isOnSale: true`).
 
-### 4. الأكثر طلباً (Trending)
+### 4. أحدث الإصدارات (Latest Releases) ✨
+*   **المسار**: `GET /files/latest`
+*   **الوصف**: يرجع أحدث الكتب المضافة بناءً على "تاريخ الإصدار" (`release_date`) بترتيب تنازلي.
+*   **ملاحظة الأداء**: تم استخدام تقنية `lean()` في هذا المسار لضمان أقصى سرعة استجابة.
+*   **القيود**: الحد الأقصى للمعامل `limit` هو **100** عنصر في الطلب الواحد.
+*   **المعاملات (Query Params)**: يدعم `page` و `limit` بنفس طريقة `GET /files`.
+*   **حالات الرد (Status Codes)**:
+    *   `200 OK`: تم جلب البيانات بنجاح.
+    *   `400 Bad Request`: المعاملات المرسلة (page/limit) غير صالحة.
+    *   `500 Internal Server Error`: خطأ في قاعدة البيانات.
+
+#### مثال (Axios Example):
+```javascript
+// جلب أحدث 5 إصدارات
+const fetchLatest = async () => {
+  try {
+    const { data } = await axios.get('/files/latest', {
+      params: { page: 1, limit: 5 }
+    });
+    console.log(data.data); // مصفوفة الكتب مرتبة حسب التاريخ
+    console.log(data.pagination); // { totalItems, totalPages, currentPage, itemsPerPage }
+  } catch (error) {
+    console.error("Error fetching latest:", error.response?.data?.message);
+  }
+};
+```
+
+#### شكل الرد (Response Structure):
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": "65f...",
+      "title": "عنوان الكتاب الحديث",
+      "description": "وصف قصير...",
+      "price": 150.00,
+      "discountPrice": 120.00,
+      "isOnSale": true,
+      "coverUrl": "https://...",
+      "release_date": "2024-05-10T10:00:00.000Z",
+      "category": { "name": "فكر سياسي" },
+      "productType": { "name": "كتاب" }
+    }
+  ],
+  "pagination": {
+    "totalItems": 100,
+    "totalPages": 20,
+    "currentPage": 1,
+    "itemsPerPage": 5
+  }
+}
+```
+
+### 5. الأكثر طلباً (Trending)
 *   **المسار**: `GET /files/trending`
 *   **الوصف**: يرجع الكتب الأكثر مبيعاً بناءً على عدد مرات الشراء الناجحة.
 
-### 5. الأكثر تفضيلاً (Popular)
+### 6. الأكثر تفضيلاً (Popular)
 *   **المسار**: `GET /files/popular`
 *   **الوصف**: يرجع الكتب التي تمت إضافتها للمفضلة أكثر من غيرها.
 
