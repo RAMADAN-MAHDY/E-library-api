@@ -50,6 +50,12 @@ export const uploadMetaSchema = Joi.object({
     'string.hex': 'صيغة معرف نوع المنتج غير صالحة.',
     'any.required': 'معرف نوع المنتج إلزامي.'
   }),
+
+  release_date: Joi.date().iso().max('now').optional().allow(null).messages({
+    'date.base': 'تاريخ الإصدار يجب أن يكون تاريخاً صالحاً.',
+    'date.format': 'تاريخ الإصدار يجب أن يكون بصيغة ISO 8601.',
+    'date.max': 'تاريخ الإصدار لا يمكن أن يكون في المستقبل.'
+  }),
 });
 
 export const updateFileSchema = Joi.object({
@@ -79,5 +85,10 @@ export const updateFileSchema = Joi.object({
   productType: Joi.string().hex().length(24).optional().messages({
     'string.length': 'معرف نوع المنتج غير صالح.',
     'string.hex': 'صيغة معرف نوع المنتج غير صالحة.'
+  }),
+  release_date: Joi.date().iso().max('now').optional().allow(null).messages({
+    'date.base': 'تاريخ الإصدار يجب أن يكون تاريخاً صالحاً.',
+    'date.format': 'تاريخ الإصدار يجب أن يكون بصيغة ISO 8601.',
+    'date.max': 'تاريخ الإصدار لا يمكن أن يكون في المستقبل.'
   }),
 });

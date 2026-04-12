@@ -24,6 +24,7 @@ router.get('/', fileController.getFiles);
 router.get('/on-sale', fileController.getOnSaleFiles);
 router.get('/trending', fileController.getTrending);
 router.get('/popular', fileController.getPopular);
+router.get('/latest', fileController.getLatestReleases);
 router.get('/:id', fileController.getFileById);
 
 /**

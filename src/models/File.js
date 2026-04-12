@@ -63,6 +63,10 @@ const fileSchema = new mongoose.Schema(
       ref: 'ProductType',
       required: true,
     },
+    release_date: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
