@@ -10,7 +10,7 @@ export const getProductTypes = async (query = {}) => {
 };
 
 export const updateProductType = async (id, data) => {
-  return await ProductType.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  return await ProductType.findByIdAndUpdate(id, data, { returnDocument: 'after', runValidators: true });
 };
 
 export const deleteProductType = async (id) => {

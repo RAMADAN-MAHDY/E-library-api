@@ -156,7 +156,7 @@ export const updatePaymentStatus = async (transactionId, status) => {
   const payment = await Payment.findOneAndUpdate(
     { transactionId: transactionId.toString() },
     { status },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!payment) {
