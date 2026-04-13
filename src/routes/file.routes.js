@@ -1,7 +1,7 @@
 // src/routes/file.routes.js
 import { Router } from 'express';
 import multer from 'multer';
-import auth from '../middleware/auth.js';
+import auth, { isAdmin } from '../middleware/auth.js';
 import validate from '../middleware/validate.js';
 import { uploadMetaSchema, updateFileSchema } from '../validations/file.validation.js';
 import * as fileController from '../controllers/file.controller.js';
@@ -38,6 +38,16 @@ router.get('/:id/cover-url', fileController.getCoverImageUrl);
 router.use(auth);
 
 /**
+ * GET /api/v1/files/:id/download-link
+ * Returns a secure, expiring presigned URL to download the main file.
+ */
+router.get('/:id/download-link', fileController.getDownloadLink);
+
+// ─── Admin-Only Routes ──────────────────────────────────────────────────────
+
+router.use(isAdmin);
+
+/**
  * POST /api/v1/files/upload
  * Fields: 'file' (required), 'cover' (optional)
  * Body: title, description, price
@@ -51,12 +61,6 @@ router.post(
   validate(uploadMetaSchema),
   fileController.upload
 );
-
-/**
- * GET /api/v1/files/:id/download-link
- * Returns a secure, expiring presigned URL to download the main file.
- */
-router.get('/:id/download-link', fileController.getDownloadLink);
 
 // PATCH /api/v1/files/:id — update file metadata and/or binary objects
 router.patch(
