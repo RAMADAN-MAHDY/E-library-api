@@ -64,8 +64,8 @@ export const updateFileSchema = Joi.object({
     'string.min': 'العنوان يجب أن يحتوي على حرف واحد على الأقل.',
     'string.max': 'العنوان لا يمكن أن يتجاوز 100 حرف.'
   }),
-  description: Joi.string().max(1000).optional().allow('').messages({
-    'string.max': 'الوصف لا يمكن أن يتجاوز 1000 حرف.'
+  description: Joi.string().max(3000).optional().allow('').messages({
+    'string.max': 'الوصف لا يمكن أن يتجاوز 3000 حرف.'
   }),
   price: Joi.number().min(0).optional().messages({
     'number.base': 'السعر يجب أن يكون رقماً.',
