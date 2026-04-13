@@ -41,6 +41,40 @@ const removeFromR2 = async (key) => {
   );
 };
 
+/**
+ * Format a file document for API responses.
+ * Ensures prices are converted from cents to units and cover URLs are resolved.
+ */
+export const formatFileResponse = async (file) => {
+  if (!file) return null;
+  
+  // If it's a Mongoose document, we might want to populate it if not already
+  // But usually, it's already populated before calling this.
+  
+  let coverUrl = null;
+  if (file.coverImageKey) {
+    const result = await getCoverImageUrl(file);
+    coverUrl = result.url;
+  }
+
+  return {
+    id: file._id,
+    title: file.title,
+    description: file.description,
+    price: file.price / 100,
+    discountPrice: file.discountPrice !== null ? file.discountPrice / 100 : null,
+    isOnSale: file.isOnSale,
+    coverUrl,
+    category: file.category,
+    productType: file.productType,
+    release_date: file.release_date,
+    size: file.size,
+    mimeType: file.mimeType,
+    createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
+  };
+};
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -85,7 +119,8 @@ export const uploadFile = async (fileObj, coverObj, meta, user) => {
     size: fileObj.size,
   });
 
-  return await file.populate(['category', 'productType']);
+  const populatedFile = await file.populate(['category', 'productType']);
+  return await formatFileResponse(populatedFile);
 };
 
 /**
@@ -141,7 +176,8 @@ export const updateFile = async (fileId, user, updates, fileObj = null, coverObj
   if (updates.release_date !== undefined) file.release_date = updates.release_date || null;
 
   await file.save();
-  return await file.populate(['category', 'productType']);
+  const populatedFile = await file.populate(['category', 'productType']);
+  return await formatFileResponse(populatedFile);
 };
 
 /**
@@ -209,7 +245,7 @@ export const getDownloadLink = async (fileId, user) => {
  */
 export const getCoverImageUrl = async (fileOrId) => {
   let file;
-  if (typeof fileOrId === 'object' && fileOrId !== null) {
+  if (fileOrId && typeof fileOrId === 'object' && fileOrId.coverImageKey !== undefined) {
     file = fileOrId;
   } else {
     file = await File.findById(fileOrId);
@@ -242,28 +278,7 @@ export const getFileById = async (fileId) => {
     throw err;
   }
 
-  // Resolve cover URL
-  let coverUrl = null;
-  if (file.coverImageKey) {
-    const result = await getCoverImageUrl(file);
-    coverUrl = result.url;
-  }
-
-  return {
-    id: file._id,
-    title: file.title,
-    description: file.description,
-    price: file.price / 100,
-    discountPrice: file.discountPrice !== null ? file.discountPrice / 100 : null,
-    isOnSale: file.isOnSale,
-    coverUrl,
-    category: file.category,
-    productType: file.productType,
-    size: file.size,
-    mimeType: file.mimeType,
-    createdAt: file.createdAt,
-    updatedAt: file.updatedAt,
-  };
+  return await formatFileResponse(file);
 };
 
 /**
@@ -320,25 +335,7 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
   // 3. Resolve cover URLs and build response objects
   const resolvedFiles = await Promise.all(
     files.map(async (f) => {
-      let coverUrl = null;
-      if (f.coverImageKey) {
-        const result = await getCoverImageUrl(f);
-        coverUrl = result.url;
-      }
-
-      return {
-        id: f._id,
-        title: f.title,
-        description: f.description,
-        price: f.price / 100,
-        discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
-        isOnSale: f.isOnSale,
-        coverUrl,
-        category: f.category,
-        productType: f.productType,
-        release_date: f.release_date,
-        createdAt: f.createdAt,
-      };
+      return await formatFileResponse(f);
     })
   );
 
@@ -378,25 +375,7 @@ export const getLatestReleases = async (page = 1, limit = 12) => {
 
   const resolvedFiles = await Promise.all(
     files.map(async (f) => {
-      let coverUrl = null;
-      if (f.coverImageKey) {
-        const result = await getCoverImageUrl(f);
-        coverUrl = result.url;
-      }
-
-      return {
-        id: f._id,
-        title: f.title,
-        description: f.description,
-        price: f.price / 100,
-        discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
-        isOnSale: f.isOnSale,
-        coverUrl,
-        category: f.category,
-        productType: f.productType,
-        release_date: f.release_date,
-        createdAt: f.createdAt,
-      };
+      return await formatFileResponse(f);
     })
   );
 
@@ -433,14 +412,7 @@ export const getTrendingFiles = async (limit = 10) => {
   const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
 
   return await Promise.all(orderedFiles.map(async (f) => {
-    const result = await getCoverImageUrl(f);
-    return {
-      ...f,
-      id: f._id,
-      price: f.price / 100,
-      discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
-      coverUrl: result.url
-    };
+    return await formatFileResponse(f);
   }));
 };
 
@@ -463,13 +435,6 @@ export const getPopularFiles = async (limit = 10) => {
   const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
 
   return await Promise.all(orderedFiles.map(async (f) => {
-    const result = await getCoverImageUrl(f);
-    return {
-      ...f,
-      id: f._id,
-      price: f.price / 100,
-      discountPrice: f.discountPrice !== null ? f.discountPrice / 100 : null,
-      coverUrl: result.url
-    };
+    return await formatFileResponse(f);
   }));
 };
