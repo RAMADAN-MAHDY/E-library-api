@@ -3,22 +3,11 @@ import Joi from 'joi';
 
 // Validates metadata sent alongside an upload
 export const uploadMetaSchema = Joi.object({
-  title: Joi.string().trim().min(1).max(100).required().messages({
-    'string.empty': 'العنوان مطلوب.',
-    'string.min': 'العنوان يجب أن يحتوي على حرف واحد على الأقل.',
-    'string.max': 'العنوان لا يمكن أن يتجاوز 100 حرف.',
-    'any.required': 'حقل العنوان إلزامي.'
-  }),
+  title: Joi.string().trim().min(1).max(100).required(),
 
-  description: Joi.string().max(1000).optional().allow('').messages({
-    'string.max': 'الوصف لا يمكن أن يتجاوز 1000 حرف.'
-  }),
+  description: Joi.string().max(3000).optional().allow(''),
 
-  price: Joi.number().min(0).required().messages({
-    'number.base': 'السعر يجب أن يكون رقماً.',
-    'number.min': 'السعر لا يمكن أن يكون أقل من 0.',
-    'any.required': 'السعر إلزامي.'
-  }),
+  price: Joi.number().min(0).required(),
 
   discountPrice: Joi.number()
     .min(0)
@@ -27,68 +16,24 @@ export const uploadMetaSchema = Joi.object({
       is: true,
       then: Joi.required(),
       otherwise: Joi.optional().allow(null)
-    })
-    .messages({
-      'number.base': 'سعر الخصم يجب أن يكون رقماً.',
-      'number.min': 'سعر الخصم لا يمكن أن يكون أقل من 0.',
-      'number.less': 'سعر الخصم يجب أن يكون أقل من السعر الأساسي.',
-      'any.required': 'يجب تحديد سعر الخصم عند تفعيل التخفيض.'
     }),
 
-  isOnSale: Joi.boolean().default(false).messages({
-    'boolean.base': 'قيمة التخفيض يجب أن تكون true أو false.'
-  }),
+  isOnSale: Joi.boolean().default(false),
 
-  category: Joi.string().hex().length(24).required().messages({
-    'string.length': 'معرف القسم غير صالح.',
-    'string.hex': 'صيغة معرف القسم غير صالحة.',
-    'any.required': 'معرف القسم إلزامي.'
-  }),
+  category: Joi.string().hex().length(24).required(),
 
-  productType: Joi.string().hex().length(24).required().messages({
-    'string.length': 'معرف نوع المنتج غير صالح.',
-    'string.hex': 'صيغة معرف نوع المنتج غير صالحة.',
-    'any.required': 'معرف نوع المنتج إلزامي.'
-  }),
+  productType: Joi.string().hex().length(24).required(),
 
-  release_date: Joi.date().iso().max('now').optional().allow(null).messages({
-    'date.base': 'تاريخ الإصدار يجب أن يكون تاريخاً صالحاً.',
-    'date.format': 'تاريخ الإصدار يجب أن يكون بصيغة ISO 8601.',
-    'date.max': 'تاريخ الإصدار لا يمكن أن يكون في المستقبل.'
-  }),
+  release_date: Joi.date().iso().max('now').optional().allow(null),
 });
 
 export const updateFileSchema = Joi.object({
-  title: Joi.string().trim().min(1).max(100).optional().messages({
-    'string.empty': 'العنوان لا يمكن أن يكون فارغاً.',
-    'string.min': 'العنوان يجب أن يحتوي على حرف واحد على الأقل.',
-    'string.max': 'العنوان لا يمكن أن يتجاوز 100 حرف.'
-  }),
-  description: Joi.string().max(3000).optional().allow('').messages({
-    'string.max': 'الوصف لا يمكن أن يتجاوز 3000 حرف.'
-  }),
-  price: Joi.number().min(0).optional().messages({
-    'number.base': 'السعر يجب أن يكون رقماً.',
-    'number.min': 'السعر لا يمكن أن يكون أقل من 0.'
-  }),
-  discountPrice: Joi.number().min(0).optional().allow(null).messages({
-    'number.base': 'سعر الخصم يجب أن يكون رقماً.',
-    'number.min': 'سعر الخصم لا يمكن أن يكون أقل من 0.'
-  }),
-  isOnSale: Joi.boolean().optional().messages({
-    'boolean.base': 'يجب تحديد ما إذا كان المنتج في التخفيضات بصيغة صحيحة (نعم/لا).'
-  }),
-  category: Joi.string().hex().length(24).optional().messages({
-    'string.length': 'معرف القسم غير صالح.',
-    'string.hex': 'صيغة معرف القسم غير صالحة.'
-  }),
-  productType: Joi.string().hex().length(24).optional().messages({
-    'string.length': 'معرف نوع المنتج غير صالح.',
-    'string.hex': 'صيغة معرف نوع المنتج غير صالحة.'
-  }),
-  release_date: Joi.date().iso().max('now').optional().allow(null).messages({
-    'date.base': 'تاريخ الإصدار يجب أن يكون تاريخاً صالحاً.',
-    'date.format': 'تاريخ الإصدار يجب أن يكون بصيغة ISO 8601.',
-    'date.max': 'تاريخ الإصدار لا يمكن أن يكون في المستقبل.'
-  }),
+  title: Joi.string().trim().min(1).max(100).optional(),
+  description: Joi.string().max(3000).optional().allow(''),
+  price: Joi.number().min(0).optional(),
+  discountPrice: Joi.number().min(0).optional().allow(null),
+  isOnSale: Joi.boolean().optional(),
+  category: Joi.string().hex().length(24).optional(),
+  productType: Joi.string().hex().length(24).optional(),
+  release_date: Joi.date().iso().max('now').optional().allow(null),
 });
