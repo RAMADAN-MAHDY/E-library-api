@@ -256,7 +256,7 @@ export const getPayments = async (query = {}) => {
     payments.map(async (p) => {
       const paymentObj = p.toObject();
       if (paymentObj.book) {
-        const result = await getCoverImageUrl(paymentObj.book._id);
+        const result = await getCoverImageUrl(paymentObj.book);
         paymentObj.book.id = paymentObj.book._id;
         paymentObj.book.price = paymentObj.book.price / 100;
         paymentObj.book.coverUrl = result.url;
