@@ -63,6 +63,11 @@ const fileSchema = new mongoose.Schema(
       ref: 'ProductType',
       required: true,
     },
+    language: {
+      type: String,
+      enum: ['ar', 'en', 'es'],
+      default: 'ar',
+    },
     release_date: {
       type: Date,
       default: null,

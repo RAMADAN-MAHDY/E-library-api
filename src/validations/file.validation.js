@@ -24,6 +24,8 @@ export const uploadMetaSchema = Joi.object({
 
   productType: Joi.string().hex().length(24).required(),
 
+  language: Joi.string().valid('ar', 'en', 'es').default('ar'),
+
   release_date: Joi.date().iso().max('now').optional().allow(null),
 });
 
@@ -35,5 +37,6 @@ export const updateFileSchema = Joi.object({
   isOnSale: Joi.boolean().optional(),
   category: Joi.string().hex().length(24).optional(),
   productType: Joi.string().hex().length(24).optional(),
+  language: Joi.string().valid('ar', 'en', 'es').optional(),
   release_date: Joi.date().iso().max('now').optional().allow(null),
 });

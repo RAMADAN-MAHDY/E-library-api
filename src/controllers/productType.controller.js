@@ -12,7 +12,9 @@ export const create = async (req, res, next) => {
 
 export const getAll = async (req, res, next) => {
   try {
-    const types = await productTypeService.getProductTypes();
+    const query = {};
+    if (req.query.language) query.language = req.query.language;
+    const types = await productTypeService.getProductTypes(query);
     res.status(200).json({ status: 'success', data: types });
   } catch (err) {
     next(err);

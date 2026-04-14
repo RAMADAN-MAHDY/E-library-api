@@ -18,6 +18,7 @@ export const upload = async (req, res, next) => {
       isOnSale: req.body.isOnSale === 'true' || req.body.isOnSale === true,
       category: req.body.category,
       productType: req.body.productType,
+      language: req.body.language || 'ar',
       release_date: req.body.release_date,
     };
 
@@ -70,6 +71,7 @@ export const getFiles = async (req, res, next) => {
     if (req.query.owner) query.owner = req.query.owner;
     if (req.query.category) query.category = req.query.category;
     if (req.query.productType) query.productType = req.query.productType;
+    if (req.query.language) query.language = req.query.language;
     if (req.query.isOnSale !== undefined) query.isOnSale = req.query.isOnSale === 'true';
     
     if (req.query.q) {

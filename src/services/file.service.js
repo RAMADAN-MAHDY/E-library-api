@@ -67,6 +67,7 @@ export const formatFileResponse = async (file) => {
     coverUrl,
     category: file.category,
     productType: file.productType,
+    language: file.language,
     release_date: file.release_date,
     size: file.size,
     mimeType: file.mimeType,
@@ -173,6 +174,7 @@ export const updateFile = async (fileId, user, updates, fileObj = null, coverObj
   if (updates.isOnSale !== undefined) file.isOnSale = updates.isOnSale === 'true' || updates.isOnSale === true;
   if (updates.category !== undefined) file.category = updates.category;
   if (updates.productType !== undefined) file.productType = updates.productType;
+  if (updates.language !== undefined) file.language = updates.language;
   if (updates.release_date !== undefined) file.release_date = updates.release_date || null;
 
   await file.save();

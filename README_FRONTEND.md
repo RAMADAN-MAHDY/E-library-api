@@ -74,6 +74,7 @@
     *   `q`: للبحث بالاسم أو الوصف.
     *   `category`: ID المجال (خذه من قائمة المجالات).
     *   `productType`: ID النوع (كتاب، تقرير..).
+    *   `language`: رمز اللغة (`ar`, `en`, `es`) للفلترة حسب لغة الكتاب.
     *   `page`: رقم الصفحة (الافتراضي 1).
     *   `limit`: عدد العناصر (الافتراضي 12).
 
@@ -107,6 +108,7 @@ const fetchBooks = async () => {
       "discountPrice": 80, // السعر بعد الخصم (إن وجد)
       "isOnSale": true,
       "coverUrl": "https://...", // رابط الصورة
+      "language": "ar", // لغة الكتاب (ar, en, es)
       "category": { "_id": "...", "name": "اسم المجال" },
       "productType": { "_id": "...", "name": "كتاب" },
       "release_date": "2024-05-10T00:00:00.000Z", // تاريخ الإصدار الرسمي
@@ -140,6 +142,7 @@ const fetchBooks = async () => {
     "discountPrice": 80.50,
     "isOnSale": true,
     "coverUrl": "...",
+    "language": "ar",
     "size": 102450, // حجم الملف بالبايت
     "mimeType": "application/pdf",
     "category": { ... },
@@ -192,6 +195,7 @@ const fetchLatest = async () => {
       "discountPrice": 120.00,
       "isOnSale": true,
       "coverUrl": "https://...",
+      "language": "ar",
       "release_date": "2024-05-10T10:00:00.000Z",
       "category": { "name": "فكر سياسي" },
       "productType": { "name": "كتاب" }
@@ -217,11 +221,11 @@ const fetchLatest = async () => {
 ---
 
 ## 🗂️ القوائم المساعدة (Filters)
-لإظهار قائمة المجالات أو الأنواع في "القائمة الجانبية" للفلترة:
+لإظهار قائمة المجالات أو الأنواع في "القائمة الجانبية" للفلترة، ويمكن أيضاً تصفية هذه القوائم حسب اللغة (عبر إضافة `?language=ar`):
 *   **المجالات**: `GET /categories`
-    *   **الرد**: مصفوفة من المجالات `{ _id, name, description, coverUrl }`.
+    *   **الرد**: مصفوفة من المجالات `{ _id, name, description, coverUrl, language }`.
 *   **الأنواع**: `GET /product-types`
-    *   **الرد**: مصفوفة من الأنواع `{ _id, name }`.
+    *   **الرد**: مصفوفة من الأنواع `{ _id, name, language }`.
 
 ---
 

@@ -17,6 +17,11 @@ const categorySchema = new mongoose.Schema(
     coverImageKey: {
       type: String,
     },
+    language: {
+      type: String,
+      enum: ['ar', 'en', 'es'],
+      default: 'ar',
+    },
   },
   { timestamps: true }
 );
