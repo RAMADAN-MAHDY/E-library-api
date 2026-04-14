@@ -13,7 +13,17 @@ export const create = async (req, res, next) => {
 export const getAll = async (req, res, next) => {
   try {
     const query = {};
-    if (req.query.language) query.language = req.query.language;
+    if (req.query.language) {
+      if (req.query.language === 'ar') {
+        query.$or = [
+          { language: 'ar' },
+          { language: { $exists: false } },
+          { language: null }
+        ];
+      } else {
+        query.language = req.query.language;
+      }
+    }
     const types = await productTypeService.getProductTypes(query);
     res.status(200).json({ status: 'success', data: types });
   } catch (err) {
