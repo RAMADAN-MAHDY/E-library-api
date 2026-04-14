@@ -14,6 +14,11 @@ const productTypeSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    language: {
+      type: String,
+      enum: ['ar', 'en', 'es', 'fr'],
+      default: 'ar',
+    },
   },
   { timestamps: true }
 );

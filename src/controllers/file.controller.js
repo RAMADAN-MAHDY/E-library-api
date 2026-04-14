@@ -18,6 +18,7 @@ export const upload = async (req, res, next) => {
       isOnSale: req.body.isOnSale === 'true' || req.body.isOnSale === true,
       category: req.body.category,
       productType: req.body.productType,
+      language: req.body.language || 'ar',
       release_date: req.body.release_date,
     };
 
@@ -70,6 +71,7 @@ export const getFiles = async (req, res, next) => {
     if (req.query.owner) query.owner = req.query.owner;
     if (req.query.category) query.category = req.query.category;
     if (req.query.productType) query.productType = req.query.productType;
+    if (req.query.language) query.language = req.query.language;
     if (req.query.isOnSale !== undefined) query.isOnSale = req.query.isOnSale === 'true';
     
     if (req.query.q) {
@@ -97,6 +99,7 @@ export const getOnSaleFiles = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const query = { isOnSale: true };
+    if (req.query.language) query.language = req.query.language;
 
     const result = await fileService.getFiles(query, page, limit);
     res.status(200).json({ 
@@ -112,7 +115,8 @@ export const getOnSaleFiles = async (req, res, next) => {
 export const getTrending = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const files = await fileService.getTrendingFiles(limit);
+    const language = req.query.language;
+    const files = await fileService.getTrendingFiles(limit, language);
     res.status(200).json({ status: 'success', data: files });
   } catch (err) {
     next(err);
@@ -122,7 +126,8 @@ export const getTrending = async (req, res, next) => {
 export const getPopular = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const files = await fileService.getPopularFiles(limit);
+    const language = req.query.language;
+    const files = await fileService.getPopularFiles(limit, language);
     res.status(200).json({ status: 'success', data: files });
   } catch (err) {
     next(err);
@@ -133,13 +138,14 @@ export const getLatestReleases = async (req, res, next) => {
   try {
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 12;
+    const language = req.query.language;
 
     // Validation: page and limit must be positive numbers
     if (page < 1) page = 1;
     if (limit < 1) limit = 12;
     if (limit > 100) limit = 100;
 
-    const result = await fileService.getLatestReleases(page, limit);
+    const result = await fileService.getLatestReleases(page, limit, language);
     res.status(200).json({
       status: 'success',
       data: result.files,

@@ -23,6 +23,7 @@
     *   `isOnSale`: `boolean` (اختياري) - لتحديد ما إذا كان الكتاب معروضًا للبيع بخصم (`true`/`false`).
     *   `category`: `string` (مطلوب) - `_id` الخاص بالمجال الذي ينتمي إليه الكتاب.
     *   `productType`: `string` (مطلوب) - `_id` الخاص بنوع المنتج (مثل كتاب، تقرير).
+    *   `language`: `string` (اختياري) - لغة الكتاب (`ar`, `en`, `es`) الافتراضي `ar`.
     *   `release_date`: `string` (اختياري) - تاريخ الإصدار الرسمي (ISO 8601). **يجب ألا يكون في المستقبل**.
     *   `file`: `File` (مطلوب) - ملف الكتاب نفسه (PDF/EPUB).
     *   `cover`: `File` (اختياري) - صورة الغلاف للكتاب.
@@ -40,6 +41,7 @@
         "discountPrice": "number",
         "isOnSale": "boolean",
         "coverUrl": "string",     // رابط صورة الغلاف
+        "language": "string",     // لغة الكتاب
         "fileUrl": "string",      // رابط الملف
         "category": {
           "_id": "string",
@@ -144,6 +146,7 @@
     *   `isOnSale`: `boolean` (اختياري) - حالة العرض الجديدة.
     *   `category`: `string` (اختياري) - `_id` المجال الجديد.
     *   `productType`: `string` (اختياري) - `_id` النوع الجديد.
+    *   `language`: `string` (اختياري) - لغة الكتاب الجديدة.
     *   `release_date`: `string` (اختياري) - تاريخ الإصدار الرسمي (ISO 8601). **يجب ألا يكون في المستقبل**.
     *   `file`: `File` (اختياري) - ملف الكتاب الجديد (PDF/EPUB).
     *   `cover`: `File` (اختياري) - صورة الغلاف الجديدة.

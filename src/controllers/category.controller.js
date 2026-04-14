@@ -13,7 +13,9 @@ export const create = async (req, res, next) => {
 
 export const getAll = async (req, res, next) => {
   try {
-    const categories = await categoryService.getCategories();
+    const query = {};
+    if (req.query.language) query.language = req.query.language;
+    const categories = await categoryService.getCategories(query);
     res.status(200).json({ status: 'success', data: categories });
   } catch (err) {
     next(err);
