@@ -71,14 +71,37 @@ export const getFiles = async (req, res, next) => {
     if (req.query.owner) query.owner = req.query.owner;
     if (req.query.category) query.category = req.query.category;
     if (req.query.productType) query.productType = req.query.productType;
-    if (req.query.language) query.language = req.query.language;
+    
+    // Language filtering: 'ar' includes documents with no language set
+    if (req.query.language) {
+      if (req.query.language === 'ar') {
+        query.$and = query.$and || [];
+        query.$and.push({
+          $or: [
+            { language: 'ar' },
+            { language: { $exists: false } },
+            { language: null }
+          ]
+        });
+      } else {
+        query.language = req.query.language;
+      }
+    }
+
     if (req.query.isOnSale !== undefined) query.isOnSale = req.query.isOnSale === 'true';
     
     if (req.query.q) {
-      query.$or = [
-        { title: { $regex: req.query.q, $options: 'i' } },
-        { description: { $regex: req.query.q, $options: 'i' } }
-      ];
+      const searchQuery = {
+        $or: [
+          { title: { $regex: req.query.q, $options: 'i' } },
+          { description: { $regex: req.query.q, $options: 'i' } }
+        ]
+      };
+      if (query.$and) {
+        query.$and.push(searchQuery);
+      } else {
+        query.$or = searchQuery.$or;
+      }
     }
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
@@ -99,7 +122,18 @@ export const getOnSaleFiles = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const query = { isOnSale: true };
-    if (req.query.language) query.language = req.query.language;
+
+    if (req.query.language) {
+      if (req.query.language === 'ar') {
+        query.$or = [
+          { language: 'ar' },
+          { language: { $exists: false } },
+          { language: null }
+        ];
+      } else {
+        query.language = req.query.language;
+      }
+    }
 
     const result = await fileService.getFiles(query, page, limit);
     res.status(200).json({ 
