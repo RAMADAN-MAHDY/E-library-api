@@ -357,13 +357,14 @@ export const getFiles = async (query = {}, page = 1, limit = 12) => {
 /**
  * Get latest releases (Sorted by release_date DESC, excluding future dates)
  */
-export const getLatestReleases = async (page = 1, limit = 12) => {
+export const getLatestReleases = async (page = 1, limit = 12, language = null) => {
   const skip = (page - 1) * limit;
   const now = new Date();
 
   const query = {
     release_date: { $ne: null, $lte: now }
   };
+  if (language) query.language = language;
 
   const totalResults = await File.countDocuments(query);
   const totalPages = Math.ceil(totalResults / limit);
@@ -397,21 +398,28 @@ export const getLatestReleases = async (page = 1, limit = 12) => {
 /**
  * Get most sold books (Trending)
  */
-export const getTrendingFiles = async (limit = 10) => {
+export const getTrendingFiles = async (limit = 10, language = null) => {
   const trending = await Payment.aggregate([
     { $match: { status: 'succeeded' } },
     { $group: { _id: '$book', count: { $sum: 1 } } },
     { $sort: { count: -1 } },
-    { $limit: limit }
+    { $limit: limit * 2 } // Get more to allow for language filtering if needed
   ]);
 
   const fileIds = trending.map(t => t._id);
-  const files = await File.find({ _id: { $in: fileIds } })
+  const query = { _id: { $in: fileIds } };
+  if (language) query.language = language;
+
+  const files = await File.find(query)
     .populate(['category', 'productType'])
+    .limit(limit)
     .lean();
 
-  // Maintain order
-  const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
+  // Maintain order as much as possible, but filtered by language
+  const orderedFiles = fileIds
+    .map(id => files.find(f => f._id.toString() === id.toString()))
+    .filter(Boolean)
+    .slice(0, limit);
 
   return await Promise.all(orderedFiles.map(async (f) => {
     return await formatFileResponse(f);
@@ -421,20 +429,27 @@ export const getTrendingFiles = async (limit = 10) => {
 /**
  * Get most favorited books (Popular)
  */
-export const getPopularFiles = async (limit = 10) => {
+export const getPopularFiles = async (limit = 10, language = null) => {
   const popular = await User.aggregate([
     { $unwind: '$favorites' },
     { $group: { _id: '$favorites', count: { $sum: 1 } } },
     { $sort: { count: -1 } },
-    { $limit: limit }
+    { $limit: limit * 2 } // Get more to allow for language filtering if needed
   ]);
 
   const fileIds = popular.map(p => p._id);
-  const files = await File.find({ _id: { $in: fileIds } })
+  const query = { _id: { $in: fileIds } };
+  if (language) query.language = language;
+
+  const files = await File.find(query)
     .populate(['category', 'productType'])
+    .limit(limit)
     .lean();
 
-  const orderedFiles = fileIds.map(id => files.find(f => f._id.toString() === id.toString())).filter(Boolean);
+  const orderedFiles = fileIds
+    .map(id => files.find(f => f._id.toString() === id.toString()))
+    .filter(Boolean)
+    .slice(0, limit);
 
   return await Promise.all(orderedFiles.map(async (f) => {
     return await formatFileResponse(f);

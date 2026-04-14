@@ -65,7 +65,7 @@ const fileSchema = new mongoose.Schema(
     },
     language: {
       type: String,
-      enum: ['ar', 'en', 'es'],
+      enum: ['ar', 'en', 'es', 'fr'],
       default: 'ar',
     },
     release_date: {
