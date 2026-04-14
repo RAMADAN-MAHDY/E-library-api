@@ -364,7 +364,19 @@ export const getLatestReleases = async (page = 1, limit = 12, language = null) =
   const query = {
     release_date: { $ne: null, $lte: now }
   };
-  if (language) query.language = language;
+  if (language) {
+    if (language === 'ar') {
+      query.$and = [{
+        $or: [
+          { language: 'ar' },
+          { language: { $exists: false } },
+          { language: null }
+        ]
+      }];
+    } else {
+      query.language = language;
+    }
+  }
 
   const totalResults = await File.countDocuments(query);
   const totalPages = Math.ceil(totalResults / limit);
@@ -408,7 +420,17 @@ export const getTrendingFiles = async (limit = 10, language = null) => {
 
   const fileIds = trending.map(t => t._id);
   const query = { _id: { $in: fileIds } };
-  if (language) query.language = language;
+  if (language) {
+    if (language === 'ar') {
+      query.$or = [
+        { language: 'ar' },
+        { language: { $exists: false } },
+        { language: null }
+      ];
+    } else {
+      query.language = language;
+    }
+  }
 
   const files = await File.find(query)
     .populate(['category', 'productType'])
@@ -439,7 +461,17 @@ export const getPopularFiles = async (limit = 10, language = null) => {
 
   const fileIds = popular.map(p => p._id);
   const query = { _id: { $in: fileIds } };
-  if (language) query.language = language;
+  if (language) {
+    if (language === 'ar') {
+      query.$or = [
+        { language: 'ar' },
+        { language: { $exists: false } },
+        { language: null }
+      ];
+    } else {
+      query.language = language;
+    }
+  }
 
   const files = await File.find(query)
     .populate(['category', 'productType'])
