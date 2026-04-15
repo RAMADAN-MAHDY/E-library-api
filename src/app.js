@@ -25,6 +25,7 @@ app.use(helmet());
 
 app.use(cors({
   origin: [
+    'http://192.168.1.2:3000',
     'http://localhost:3000',
     'http://localhost:5174',
     'https://aldawlia-publishing.vercel.app',
